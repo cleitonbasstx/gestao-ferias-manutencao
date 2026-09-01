@@ -1,0 +1,2528 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Planejamento integrado de férias da cadeia de manutenção.">
+  <meta property="og:title" content="Gestão de Férias">
+  <meta property="og:description" content="Planejamento integrado de férias da cadeia de manutenção.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:title" content="Gestão de Férias">
+  <meta name="twitter:description" content="Planejamento integrado de férias da cadeia de manutenção.">
+  <title>Gestão de Férias</title>
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem('gestao-ferias-theme');
+        const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = savedTheme || preferredTheme;
+        document.documentElement.dataset.sidebar = localStorage.getItem('gestao-ferias-sidebar') || 'expanded';
+      } catch (_) {
+        document.documentElement.dataset.theme = 'light';
+        document.documentElement.dataset.sidebar = 'expanded';
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="auth.css">
+  <style>
+    body { --font-geist-sans: Arial, Helvetica, sans-serif; }
+    .preview-note { position: fixed; right: 18px; bottom: 18px; z-index: 10; padding: 9px 13px; border: 1px solid #cfe1e5; border-radius: 9px; background: #f4fbfc; color: #28636a; box-shadow: 0 8px 24px #18324820; font-size: 10px; }
+    .app-screen { display: none; animation: screen-in .18s ease; }
+    .app-screen.active { display: block; }
+    @keyframes screen-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .screen-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .team-card { padding: 18px; }
+    .team-card h3 { margin: 0; font-size: 13px; }
+    .team-card p { margin: 5px 0 16px; color: #7d8e99; font-size: 9px; }
+    .team-card .team-stats { display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #edf2f4; }
+    .team-card .team-stats strong, .team-card .team-stats small { display: block; }
+    .team-card .team-stats strong { font-size: 18px; }.team-card .team-stats small { color: #8a99a3; font-size: 8px; }
+    .calendar-board { padding: 0 18px 18px; }
+    .calendar-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 4px 0 16px; }
+    .calendar-toolbar h3 { margin: 0; font-size: 14px; }.calendar-toolbar button { width: 30px; height: 30px; border: 1px solid #dce5e9; border-radius: 8px; background: white; color: #456072; }
+    .month-grid { display: grid; grid-template-columns: repeat(7, minmax(74px, 1fr)); overflow: hidden; border: 1px solid #dfe7eb; border-radius: 10px; }
+    .weekday { padding: 9px; background: #f7f9fa; color: #82929c; font-size: 8px; font-weight: 800; text-align: center; text-transform: uppercase; }
+    .day { min-height: 88px; padding: 8px; border-top: 1px solid #e7edef; border-right: 1px solid #e7edef; background: white; color: #4b6474; font-size: 9px; }
+    .day:nth-child(7n) { border-right: 0; }.day.muted { background: #fafbfc; color: #b5c0c7; }.day.today { box-shadow: inset 0 0 0 2px #0b8993; }
+    .event { display: block; margin-top: 5px; padding: 4px 5px; overflow: hidden; border-radius: 4px; background: #e3f3f2; color: #14727a; font-size: 7px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+    .event.amber { background: #fff0d7; color: #9d6c1b; }.event.blue { background: #e7eff8; color: #3e6f96; }
+    .alert-list { display: grid; gap: 10px; }
+    .alert-item { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 12px; padding: 14px 16px; }
+    .alert-symbol { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: #fde8e8; color: #b9474d; font-weight: 800; }.alert-symbol.amber { background: #fff1d8; color: #a77418; }.alert-symbol.blue { background: #e7eff8; color: #386d97; }
+    .alert-item strong, .alert-item small { display: block; }.alert-item strong { font-size: 10px; }.alert-item small { margin-top: 4px; color: #80909a; font-size: 8px; }.alert-item button { border: 0; background: transparent; color: #087e89; font-size: 9px; font-weight: 700; }
+    .settings-list { padding: 5px 18px 18px; }.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 15px 0; border-top: 1px solid #edf2f4; }.setting-row strong, .setting-row small { display: block; }.setting-row strong { font-size: 10px; }.setting-row small { margin-top: 4px; color: #85949e; font-size: 8px; }.setting-row select { height: 34px; border: 1px solid #d9e3e8; border-radius: 8px; background: white; color: #456072; font-size: 9px; }
+    .switch { position: relative; width: 38px; height: 22px; border: 0; border-radius: 99px; background: #cbd7dc; }.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: .2s; }.switch.on { background: #087e89; }.switch.on::after { left: 19px; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; padding: 20px; background: #07182799; }.modal-backdrop.open { display: grid; }.modal { width: min(540px, 100%); overflow: hidden; border-radius: 14px; background: white; box-shadow: 0 30px 80px #07182755; }.modal-head { display: flex; justify-content: space-between; padding: 19px 20px; border-bottom: 1px solid #e5ecef; }.modal-head h2 { margin: 0; font-size: 15px; }.modal-head button { border: 0; background: none; color: #6e818d; font-size: 18px; }.modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; padding: 20px; }.modal-body label { color: #526a79; font-size: 9px; font-weight: 700; }.modal-body label.full { grid-column: 1 / -1; }.modal-body input, .modal-body select { width: 100%; height: 38px; margin-top: 6px; padding: 0 10px; border: 1px solid #d7e1e6; border-radius: 8px; background: white; color: #314e61; font-size: 10px; }.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid #e8edef; background: #f8fafb; }
+    .toast { position: fixed; left: 50%; bottom: 24px; z-index: 40; display: none; padding: 11px 16px; border-radius: 9px; background: #15374a; color: white; box-shadow: 0 12px 30px #102d4035; font-size: 10px; transform: translateX(-50%); }.toast.show { display: block; }
+    .gantt-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .gantt-kpi { padding: 14px 16px; }.gantt-kpi small, .gantt-kpi strong { display: block; }.gantt-kpi small { color: #7f909b; font-size: 8px; font-weight: 700; text-transform: uppercase; }.gantt-kpi strong { margin-top: 5px; color: #213f52; font-size: 21px; }.gantt-kpi.danger strong { color: #b5474e; }
+    .gantt-context-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 13px 17px; border-bottom: 1px solid #e6ecef; background: #fbfbfd; }.gantt-context-toolbar > span { color: #687286; font-size: 9px; font-weight: 800; text-transform: uppercase; }.gantt-context-toolbar select { width: 145px; height: 36px; padding: 0 10px; border: 1px solid #d8e2e6; border-radius: 10px; outline: none; background: white; color: #405c6e; font-size: 9px; }.gantt-context-toolbar select[hidden] { display: none; }
+    .gantt-controls { display: grid; grid-template-columns: minmax(190px, 1.2fr) repeat(3, minmax(135px, .7fr)) auto; gap: 9px; padding: 15px 17px; border-bottom: 1px solid #e6ecef; }.gantt-controls input, .gantt-controls select { width: 100%; height: 36px; padding: 0 10px; border: 1px solid #d8e2e6; border-radius: 8px; outline: none; background: white; color: #405c6e; font-size: 9px; }.conflict-toggle { display: flex; align-items: center; gap: 7px; padding: 0 9px; color: #506979; font-size: 9px; font-weight: 700; white-space: nowrap; }.conflict-toggle input { width: 15px; height: 15px; accent-color: #b94d53; }
+    .gantt-legend { display: flex; flex-wrap: wrap; gap: 13px; padding: 10px 17px; border-bottom: 1px solid #edf2f4; color: #748792; font-size: 8px; }.gantt-legend span { display: flex; align-items: center; gap: 5px; }.gantt-legend i { width: 19px; height: 7px; border-radius: 3px; background: #0b8993; }.gantt-legend i.cycle-two { background: #4d82a8; }.gantt-legend i.warning { background: #d49327; }.gantt-legend i.critical { background: #c44f56; }
+    .gantt-scroll { max-height: 650px; overflow: auto; background: white; scrollbar-color: #9fb2bd #edf2f4; }.gantt-canvas { --gantt-track-width: 1200px; --gantt-column-width: 100px; min-width: calc(330px + var(--gantt-track-width)); }
+    .gantt-head, .gantt-row { display: grid; grid-template-columns: 330px var(--gantt-track-width); }.gantt-head { position: sticky; top: 0; z-index: 15; min-height: 40px; border-bottom: 1px solid #d7e1e5; background: #f6f9fa; }.gantt-head-label { position: sticky; left: 0; z-index: 17; display: flex; align-items: center; padding: 0 15px; border-right: 1px solid #dce5e9; background: #f6f9fa; color: #627986; font-size: 8px; font-weight: 800; text-transform: uppercase; }.gantt-months { display: grid; grid-template-columns: repeat(var(--gantt-columns, 12), var(--gantt-column-width)); }.gantt-month { display: grid; place-items: center; border-right: 1px solid #dfe7ea; color: #647b88; font-size: 8px; font-weight: 800; text-transform: uppercase; }.gantt-day { grid-template-rows: auto auto; align-content: center; gap: 2px; }.gantt-day span { font-size: 7px; color: #9299a8; }.gantt-day.weekend { background: #f1f2f7; color: #4f46e5; }
+    .gantt-group { position: sticky; left: 0; z-index: 9; width: calc(330px + var(--gantt-track-width)); padding: 7px 15px; border-top: 1px solid #d7e2e6; border-bottom: 1px solid #d7e2e6; background: #eaf2f4; color: #355668; font-size: 8px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }.gantt-row { min-height: 45px; border-bottom: 1px solid #edf2f4; }.gantt-row:hover .gantt-person, .gantt-row:hover .gantt-track { background-color: #f8fbfb; }.gantt-person { position: sticky; left: 0; z-index: 8; display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 9px; padding: 6px 11px; border-right: 1px solid #dfe7ea; background: white; }.gantt-person-avatar { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 7px; background: #e5f1f2; color: #18747c; font-size: 7px; font-weight: 800; }.gantt-person strong, .gantt-person small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }.gantt-person strong { max-width: 205px; color: #385466; font-size: 8px; }.gantt-person small { max-width: 205px; margin-top: 3px; color: #8797a1; font-size: 7px; }.gantt-person-badge { padding: 3px 5px; border-radius: 999px; background: #f0f4f6; color: #78909d; font-size: 6px; font-weight: 800; }.gantt-person-badge.conflict { background: #fde7e8; color: #b3484e; }
+    .gantt-track { position: relative; min-height: 45px; background-color: white; background-image: linear-gradient(to right, transparent calc(100% - 1px), #e8edef calc(100% - 1px)); background-size: var(--gantt-column-width) 100%; }.gantt-track::after { content: ''; position: absolute; top: 0; bottom: 0; left: var(--today-position, 65%); display: var(--today-display, block); width: 1px; background: #0b899366; pointer-events: none; }.gantt-bar { position: absolute; height: 13px; min-width: 3px; overflow: hidden; border-radius: 4px; background: #0b8993; color: white; font-size: 6px; font-weight: 800; line-height: 13px; text-align: center; white-space: nowrap; box-shadow: 0 1px 3px #14384a25; cursor: help; }.gantt-bar.cycle-1 { top: 7px; }.gantt-bar.cycle-2 { top: 25px; background: #4d82a8; }.gantt-bar.warning { background: #d49327; }.gantt-bar.critical { background: #c44f56; }.gantt-bar.invalid { background: repeating-linear-gradient(135deg,#b5484e 0,#b5484e 5px,#e08b8f 5px,#e08b8f 10px); }.gantt-empty { position: absolute; left: 12px; top: 15px; color: #b1bdc4; font-size: 7px; font-style: italic; }.gantt-no-results { padding: 30px; color: #7f909a; font-size: 10px; text-align: center; }
+    .conflict-summary { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; padding: 12px 16px; border-top: 1px solid #e9eef1; background: #fbfcfd; }.conflict-summary strong { font-size: 9px; }.conflict-summary small { color: #7f909a; font-size: 8px; }.conflict-summary button { grid-row: 1 / 3; grid-column: 2; align-self: center; }
+    @media (max-width: 1050px) { .gantt-kpis { grid-template-columns: repeat(2, 1fr); }.gantt-controls { grid-template-columns: repeat(2, 1fr); }.conflict-toggle { min-height: 34px; } }
+    @media (max-width: 900px) { .screen-grid { grid-template-columns: repeat(2, 1fr); }.month-grid { overflow-x: auto; }.day { min-width: 74px; } }
+    @media (max-width: 600px) { .screen-grid { grid-template-columns: 1fr; }.modal-body { grid-template-columns: 1fr; }.modal-body label.full { grid-column: auto; } }
+
+    /* Modern theme — local preview */
+    :root {
+      --navy: #111827;
+      --ink: #182033;
+      --teal: #4f46e5;
+      --line: #e7e9f2;
+      --muted: #667085;
+      --canvas: #f6f7fb;
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-soft: #eef2ff;
+      --cyan: #06b6d4;
+      --success: #16a36a;
+      --warning: #e69a22;
+      --danger: #e05260;
+      --card-shadow: 0 10px 35px rgba(30, 41, 59, .065);
+    }
+    * { scrollbar-width: thin; scrollbar-color: #b8bdce #eef0f6; }
+    body {
+      --font-geist-sans: "Inter Variable", Inter, "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 82% -10%, rgba(99, 102, 241, .10), transparent 28rem),
+        var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-geist-sans);
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select { font-family: inherit; }
+    button, a, select { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(99, 102, 241, .18);
+      outline-offset: 2px;
+    }
+    .app-screen { animation: screen-in .26s cubic-bezier(.22, 1, .36, 1); }
+    @keyframes screen-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .app-shell { grid-template-columns: 264px minmax(0, 1fr); }
+    .sidebar {
+      padding: 28px 18px 20px;
+      background:
+        radial-gradient(circle at 12% 2%, rgba(99, 102, 241, .34), transparent 15rem),
+        linear-gradient(165deg, #172033 0%, #111827 54%, #0f172a 100%);
+      box-shadow: 16px 0 50px rgba(15, 23, 42, .08);
+    }
+    .brand { gap: 13px; padding: 0 10px 30px; }
+    .brand-mark, .mobile-brand {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #818cf8, #4f46e5 58%, #4338ca);
+      box-shadow: 0 10px 24px rgba(79, 70, 229, .34), inset 0 0 0 1px rgba(255, 255, 255, .22);
+      letter-spacing: -.05em;
+    }
+    .brand-mark svg, .mobile-brand svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .brand strong { font-size: 15px; letter-spacing: -.02em; }
+    .brand small { color: #9ca8bf; font-size: 10px; letter-spacing: .13em; }
+    nav { gap: 6px; }
+    .nav-item {
+      min-height: 45px;
+      padding: 0 13px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      color: #aeb8ca;
+      font-size: 12px;
+      font-weight: 600;
+      transition: color .2s ease, background .2s ease, transform .2s ease, border-color .2s ease;
+    }
+    .nav-item span { color: #7f8aa1; font-size: 17px; }
+    .nav-item .nav-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255,255,255,.055);
+      border-radius: 10px;
+      background: rgba(255,255,255,.035);
+      color: #8e9ab1;
+      transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease;
+    }
+    .nav-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .nav-item:hover .nav-icon { border-color: rgba(165,180,252,.15); background: rgba(129,140,248,.10); color: #c7d2fe; transform: scale(1.04); }
+    .nav-item.active .nav-icon { border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.14); color: white; box-shadow: inset 0 0 0 1px rgba(255,255,255,.035); }
+    .nav-item:hover { transform: translateX(2px); border-color: rgba(255,255,255,.06); background: rgba(255,255,255,.055); }
+    .nav-item.active {
+      border-color: rgba(165, 180, 252, .18);
+      background: linear-gradient(105deg, rgba(99, 102, 241, .98), rgba(79, 70, 229, .84));
+      box-shadow: 0 10px 25px rgba(49, 46, 129, .34);
+    }
+    .nav-label { margin-top: 27px; color: #647087; font-size: 10px; letter-spacing: .16em; }
+    .sidebar-user { padding: 17px 8px 0; border-color: rgba(255,255,255,.08); }
+    .avatar {
+      border: 1px solid rgba(165,180,252,.24);
+      background: rgba(99,102,241,.18);
+      color: #c7d2fe;
+    }
+    .sidebar-user small { color: #7f8ba2; }
+
+    .topbar {
+      height: 76px;
+      padding: 0 38px;
+      border-color: rgba(226, 228, 237, .9);
+      background: rgba(255, 255, 255, .87);
+      box-shadow: 0 1px 0 rgba(255,255,255,.7);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .global-search {
+      height: 42px;
+      border-color: transparent;
+      border-radius: 13px;
+      background: #f3f4f8;
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .06);
+      transition: background .2s ease, box-shadow .2s ease;
+    }
+    .global-search:focus-within { background: white; box-shadow: 0 0 0 3px rgba(99,102,241,.13), inset 0 0 0 1px #818cf8; }
+    .global-search span { color: #8b93a5; }
+    .global-search input { color: #262d3f; font-size: 12px; }
+    .global-search input::placeholder { color: #98a0b2; }
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      border-color: #e5e7ef;
+      border-radius: 12px;
+      color: #7c8496;
+      box-shadow: 0 3px 12px rgba(30,41,59,.04);
+    }
+    .notification-dot { background: #fb5665; }
+    .notification-bell {
+      display: block;
+      color: currentColor;
+      font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+      font-size: 17px;
+      line-height: 1;
+      filter: grayscale(1);
+    }
+    .primary-button, .secondary-button { border-radius: 11px; font-weight: 700; transition: transform .2s ease, box-shadow .2s ease; }
+    .primary-button {
+      height: 41px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, .23);
+    }
+    .primary-button:hover { transform: translateY(-1px); box-shadow: 0 12px 25px rgba(79, 70, 229, .30); }
+    .secondary-button { border-color: #e1e4ed; color: #454d61; box-shadow: 0 2px 8px rgba(30,41,59,.035); }
+    .secondary-button:hover { transform: translateY(-1px); border-color: #c7cbe0; }
+
+    .content { padding: 34px 38px 54px; }
+    .page-heading { margin-bottom: 26px; }
+    .eyebrow { color: #5b5ce2 !important; font-size: 9px !important; letter-spacing: .16em; }
+    .page-heading h1 { color: #171d2e; font-size: clamp(24px, 2.35vw, 32px); font-weight: 750; letter-spacing: -.045em; }
+    .page-heading p { color: #727b8d; font-size: 12px; }
+    .filters { gap: 9px; }
+    .filters select, .gantt-controls input, .gantt-controls select, .gantt-context-toolbar select, .setting-row select, .modal-body input, .modal-body select {
+      border-color: #e0e3ec;
+      border-radius: 11px;
+      background-color: white;
+      color: #41495d;
+      box-shadow: 0 2px 8px rgba(30,41,59,.025);
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .filters select:hover, .gantt-controls input:hover, .gantt-controls select:hover, .gantt-context-toolbar select:hover, .setting-row select:hover, .modal-body input:hover, .modal-body select:hover { border-color: #c7cad8; }
+    .filters select:focus, .gantt-controls input:focus, .gantt-controls select:focus, .gantt-context-toolbar select:focus, .setting-row select:focus, .modal-body input:focus, .modal-body select:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,.12); outline: 0; }
+    .filters select { height: 40px; }
+
+    .kpi-grid { gap: 16px; margin-bottom: 17px; }
+    .kpi-card, .panel, .team-card, .gantt-kpi, .alert-item {
+      border-color: rgba(226, 228, 237, .92);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: var(--card-shadow);
+    }
+    .kpi-card { min-height: 150px; padding: 19px; overflow: hidden; }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 3px;
+      background: linear-gradient(90deg, #6366f1, #22d3ee);
+      opacity: .82;
+    }
+    .kpi-card::after { right: -34px; bottom: -48px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(99,102,241,.09), transparent 70%); }
+    .kpi-icon { width: 35px; height: 35px; border-radius: 11px; }
+    .kpi-icon.blue { background: #eef2ff; color: #4f46e5; }
+    .kpi-icon.teal { background: #e6f9fb; color: #0891b2; }
+    .kpi-icon.amber { background: #fff7e6; color: #d48210; }
+    .kpi-icon.red { background: #fff0f2; color: #dd4b5a; }
+    .kpi-card p { margin-top: 16px; color: #71798b; }
+    .kpi-card > strong { color: #202638; font-size: 27px; font-weight: 760; }
+    .kpi-trend { border: 1px solid transparent; }
+    .kpi-trend.neutral { background: #f2f4f7; color: #667085; }
+    .kpi-trend.positive { background: #eaf8f1; color: #16845a; }
+    .kpi-trend.warning { background: #fff6e4; color: #b96f09; }
+    .kpi-trend.danger { background: #fff0f1; color: #cf4452; }
+
+    .dashboard-grid { gap: 17px; margin-bottom: 17px; }
+    .panel { overflow: hidden; }
+    .panel-header { padding: 20px 21px 16px; }
+    .panel-header h2 { color: #252b3c; font-size: 13px; font-weight: 720; }
+    .panel-header p { color: #8991a1; }
+    .legend i { background: #6366f1; }
+    .bar-chart { border-color: #f0f1f6; }
+    .bar-track { background: #eff1f7; }
+    .bar-track div { background: linear-gradient(180deg, #818cf8, #4f46e5); box-shadow: 0 4px 12px rgba(79,70,229,.2); }
+    .annual-chart { position: relative; grid-template-rows: 1fr; overflow: visible; }
+    .annual-chart .bar-column { position: relative; grid-template-rows: 22px 1fr 18px; outline: none; }
+    .annual-chart .bar-value { opacity: 1; color: #343b50; font-size: 10px; font-weight: 850; }
+    .annual-chart .bar-column:focus-visible { border-radius: 8px; box-shadow: 0 0 0 3px rgba(99,102,241,.16); }
+    .annual-chart .bar-track { width: min(28px, 72%); }
+    .annual-chart .bar-track div { transition: height .3s cubic-bezier(.22,1,.36,1), filter .2s ease; }
+    .annual-chart .bar-column:hover .bar-track div, .annual-chart .bar-column:focus .bar-track div { filter: saturate(1.25) brightness(1.04); }
+    .chart-tooltip {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      z-index: 25;
+      display: none;
+      width: 220px;
+      padding: 12px 13px;
+      border: 1px solid #dde1ec;
+      border-radius: 12px;
+      background: rgba(255,255,255,.98);
+      color: #5b6376;
+      box-shadow: 0 16px 38px rgba(30,41,59,.18);
+      text-align: left;
+      transform: translateX(-50%);
+      pointer-events: none;
+      backdrop-filter: blur(12px);
+    }
+    .bar-column:hover .chart-tooltip, .bar-column:focus .chart-tooltip { display: block; animation: tooltip-in .16s ease; }
+    .bar-column.tooltip-left .chart-tooltip { left: 0; transform: none; }
+    .bar-column.tooltip-right .chart-tooltip { right: 0; left: auto; transform: none; }
+    @keyframes tooltip-in { from { opacity: 0; transform: translate(-50%, 4px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    .bar-column.tooltip-left:hover .chart-tooltip, .bar-column.tooltip-left:focus .chart-tooltip, .bar-column.tooltip-right:hover .chart-tooltip, .bar-column.tooltip-right:focus .chart-tooltip { animation-name: tooltip-edge-in; }
+    @keyframes tooltip-edge-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .chart-tooltip > strong { display: block; margin-bottom: 2px; color: #252b3e; font-size: 11px; }
+    .chart-tooltip > small { display: block; margin-bottom: 8px; color: #7a8395; font-size: 9px; }
+    .tooltip-manager-list { display: grid; gap: 5px; padding-top: 7px; border-top: 1px solid #eceef4; }
+    .tooltip-manager-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 9px; }
+    .tooltip-manager-row span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .tooltip-manager-row b { color: #4f46e5; font-size: 10px; }
+    .link-button, .alert-item button { color: #4f46e5; }
+    .management-row { border-color: #f0f1f5; }
+    .progress { height: 5px; background: #eef0f5; }
+    .vacations-panel th { padding-block: 11px; border-color: #e8eaf1; background: #f8f9fc; color: #7e8698; }
+    .vacations-panel td { padding-block: 12px; border-color: #f0f1f5; color: #596175; }
+    .vacations-panel tbody tr { transition: background .18s ease; }
+    .vacations-panel tbody tr:hover { background: #fafaff; }
+    .person > span { border-radius: 10px; background: #eef2ff; color: #514bd9; }
+    .status { background: #fff6e5; color: #b46f0c; }
+    .status.approved { background: #eaf8f1; color: #16845a; }
+    .status.review { background: #fff0f1; color: #cf4452; }
+
+    .team-card { padding: 20px; transition: transform .2s ease, box-shadow .2s ease; }
+    .team-card:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(30,41,59,.09); }
+    .team-card h3 { color: #272d3f; font-size: 14px; }
+    .team-card p { color: #858d9d; }
+    .team-card .team-stats { border-color: #eff0f5; }
+    .calendar-board { padding-bottom: 20px; }
+    .calendar-toolbar button { border-color: #e1e4ed; border-radius: 10px; color: #555d70; box-shadow: 0 2px 8px rgba(30,41,59,.03); }
+    .month-grid { border-color: #e3e5ed; border-radius: 14px; }
+    .weekday { background: #f7f8fc; color: #7b8496; }
+    .day { border-color: #eceef3; color: #535c70; }
+    .day.muted { background: #fbfbfd; }
+    .day.today { box-shadow: inset 0 0 0 2px #6366f1; }
+    .event { border-radius: 6px; background: #eef2ff; color: #4f46e5; }
+    .event.amber { background: #fff4de; color: #ad6b0b; }
+    .event.blue { background: #e8f8fb; color: #087f9a; }
+    .alert-list { gap: 12px; }
+    .alert-item { padding: 16px 18px; }
+    .alert-symbol { border-radius: 11px; background: #fff0f1; color: #d84b58; }
+    .alert-symbol.amber { background: #fff5e1; color: #bd750d; }
+    .alert-symbol.blue { background: #eef2ff; color: #514bd9; }
+    .settings-list { padding-inline: 20px; }
+    .setting-row { border-color: #eff0f5; }
+    .switch { background: #d6d9e3; }
+    .switch.on { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+
+    .gantt-kpis { gap: 14px; margin-bottom: 16px; }
+    .gantt-kpi { padding: 17px 18px; }
+    .gantt-kpi small { color: #838b9c; font-size: 8px; letter-spacing: .08em; }
+    .gantt-kpi strong { color: #272d3e; font-size: 23px; }
+    .gantt-kpi.danger strong { color: #dc4d5b; }
+    .gantt-controls { gap: 10px; padding: 17px 19px; border-color: #eceef4; background: #fbfbfd; }
+    .gantt-controls input, .gantt-controls select { height: 39px; font-size: 9px; }
+    .conflict-toggle { color: #5e6679; }
+    .conflict-toggle input { accent-color: #e05260; }
+    .gantt-legend { gap: 15px; padding: 12px 19px; border-color: #eff0f5; color: #7c8495; }
+    .gantt-legend i { border-radius: 99px; background: #6366f1; }
+    .gantt-legend i.cycle-two { background: #06b6d4; }
+    .gantt-legend i.warning { background: #e69a22; }
+    .gantt-legend i.critical { background: #e05260; }
+    .gantt-scroll { background: white; scrollbar-color: #b8bdce #eef0f6; }
+    .gantt-head { min-height: 43px; border-color: #e1e4ed; background: #f7f8fc; }
+    .gantt-head-label { border-color: #e4e6ee; background: #f7f8fc; color: #717a8d; letter-spacing: .08em; }
+    .gantt-month { border-color: #e5e7ee; color: #737c8e; }
+    .gantt-group { padding-block: 8px; border-color: #dfe2eb; background: #eef0ff; color: #4e4aa5; letter-spacing: .08em; }
+    .gantt-row { border-color: #f0f1f5; }
+    .gantt-row:hover .gantt-person, .gantt-row:hover .gantt-track { background-color: #fafaff; }
+    .gantt-person { border-color: #e7e9ef; }
+    .gantt-person-avatar { border-radius: 9px; background: #eef2ff; color: #514bd9; }
+    .gantt-person strong { color: #444c60; }
+    .gantt-person small { color: #9299a8; }
+    .gantt-person-badge { background: #f1f2f6; color: #747d90; }
+    .gantt-person-badge.conflict { background: #fff0f1; color: #cf4452; }
+    .gantt-track { background-image: repeating-linear-gradient(to right, transparent 0, transparent 99px, #eceef3 99px, #eceef3 100px); }
+    .gantt-track::after { background: rgba(79, 70, 229, .42); }
+    .gantt-bar { border-radius: 5px; background: linear-gradient(90deg, #6366f1, #4f46e5); box-shadow: 0 3px 8px rgba(79,70,229,.22); }
+    .gantt-bar.cycle-2 { background: linear-gradient(90deg, #22c2dc, #0891b2); box-shadow: 0 3px 8px rgba(8,145,178,.19); }
+    .gantt-bar.warning { background: linear-gradient(90deg, #f2aa37, #d98715); }
+    .gantt-bar.critical { background: linear-gradient(90deg, #ef6673, #d94654); }
+    .gantt-empty { color: #b1b7c4; }
+    .conflict-summary { border-color: #eceef4; background: #fafaff; }
+
+    .modal-backdrop { background: rgba(10, 15, 30, .62); backdrop-filter: blur(5px); }
+    .modal { border: 1px solid rgba(255,255,255,.5); border-radius: 18px; box-shadow: 0 32px 90px rgba(10,15,30,.28); }
+    .modal-head { padding: 21px 22px; border-color: #eceef3; }
+    .modal-head h2 { color: #252b3e; font-size: 16px; }
+    .modal-body { padding: 22px; }
+    .modal-actions { padding: 16px 22px; border-color: #eceef3; background: #fafaff; }
+    #vacation-modal .modal { overflow: visible; }
+    #vacation-modal .modal-head { border-radius: 18px 18px 0 0; }
+    #vacation-modal .modal-actions { border-radius: 0 0 18px 18px; }
+    .collaborator-combobox { position: relative; margin-top: 7px; }
+    .collaborator-search-icon { position: absolute; top: 50%; left: 15px; z-index: 1; width: 13px; height: 13px; border: 1.7px solid #747d90; border-radius: 50%; transform: translateY(-58%); pointer-events: none; }
+    .collaborator-search-icon::after { content: ''; position: absolute; width: 6px; height: 1.7px; right: -5px; bottom: -3px; border-radius: 99px; background: #747d90; transform: rotate(45deg); transform-origin: left center; }
+    .collaborator-combobox input[type="search"] { width: 100%; height: 42px; margin-top: 0; padding-left: 42px; padding-right: 42px; }
+    .collaborator-search-chevron { position: absolute; top: 50%; right: 14px; color: #747d90; font-size: 12px; transform: translateY(-50%); pointer-events: none; }
+    .collaborator-options { position: absolute; top: calc(100% + 7px); left: 0; right: 0; z-index: 80; max-height: 220px; padding: 6px; overflow-y: auto; border: 1px solid #dfe3ec; border-radius: 12px; background: #fff; box-shadow: 0 18px 44px rgba(15,23,42,.24); }
+    .collaborator-options[hidden] { display: none; }
+    .collaborator-option { display: grid; width: 100%; padding: 10px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+    .collaborator-option strong { font-size: 12px; line-height: 1.35; }
+    .collaborator-option small { margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 10px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+    .collaborator-option:hover, .collaborator-option.active { background: #eef0ff; color: #4338ca; }
+    .collaborator-option:hover small, .collaborator-option.active small { color: #6366a8; }
+    .collaborator-options-empty { padding: 14px 12px; color: var(--muted); font-size: 11px; text-align: center; }
+    html[data-theme="dark"] .collaborator-option:hover, html[data-theme="dark"] .collaborator-option.active { background: rgba(99,102,241,.2); color: #c7d2fe; }
+    html[data-theme="dark"] .collaborator-option:hover small, html[data-theme="dark"] .collaborator-option.active small { color: #a5b4fc; }
+    html[data-theme="dark"] .collaborator-options { border-color: #303748; background: #171d2a; box-shadow: 0 20px 48px rgba(0,0,0,.44); }
+    .toast { border-radius: 12px; background: #202638; box-shadow: 0 16px 38px rgba(15,23,42,.28); }
+    .preview-note { border-color: #d9dcf3; border-radius: 12px; background: rgba(250,250,255,.94); color: #4f4aa5; box-shadow: 0 12px 30px rgba(30,41,59,.10); backdrop-filter: blur(10px); }
+
+    .sidebar-close, .menu-toggle {
+      display: none;
+      place-items: center;
+      border: 0;
+      background: transparent;
+    }
+    .sidebar-overlay { position: fixed; inset: 0; z-index: 49; display: none; border: 0; background: rgba(8, 12, 24, .54); backdrop-filter: blur(3px); }
+    .theme-toggle {
+      height: 40px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #e5e7ef;
+      border-radius: 12px;
+      background: white;
+      color: #596174;
+      font-size: 10px;
+      font-weight: 750;
+      box-shadow: 0 3px 12px rgba(30,41,59,.04);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .theme-toggle:hover { transform: translateY(-1px); border-color: #c9cce0; }
+    .theme-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: #eef2ff; color: #4f46e5; font-size: 12px; }
+
+    /* Readability and flexible sidebar */
+    .app-shell { transition: grid-template-columns .28s cubic-bezier(.22, 1, .36, 1); }
+    html[data-sidebar="collapsed"] .app-shell { grid-template-columns: 78px minmax(0, 1fr); }
+    html[data-sidebar="collapsed"] .sidebar { padding-inline: 9px; }
+    html[data-sidebar="collapsed"] .brand { justify-content: center; padding-inline: 0; }
+    html[data-sidebar="collapsed"] .brand > span:nth-child(2),
+    html[data-sidebar="collapsed"] .nav-label,
+    html[data-sidebar="collapsed"] .sidebar-user > span:nth-child(2),
+    html[data-sidebar="collapsed"] .sidebar-user > button,
+    html[data-sidebar="collapsed"] .sidebar-tools .tool-label { display: none; }
+    html[data-sidebar="collapsed"] .nav-item { justify-content: center; gap: 0; padding-inline: 0; font-size: 0; }
+    html[data-sidebar="collapsed"] .nav-item span { width: auto; font-size: 18px; }
+    html[data-sidebar="collapsed"] .nav-item .nav-icon { width: 40px; height: 40px; }
+    html[data-sidebar="collapsed"] .nav-icon svg { width: 20px; height: 20px; }
+    html[data-sidebar="collapsed"] .nav-item.active {
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+    }
+    html[data-sidebar="collapsed"] .nav-item.active .nav-icon {
+      border-color: rgba(199,210,254,.28);
+      background: linear-gradient(145deg, #6d6af4, #4f46e5);
+      color: white;
+      box-shadow: 0 7px 16px rgba(79,70,229,.30), inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    html[data-sidebar="collapsed"] .sidebar-user { grid-template-columns: 1fr; justify-items: center; padding-inline: 0; }
+    html[data-sidebar="collapsed"] .sidebar-tool-button { justify-content: center; padding-inline: 0; }
+    .brand-toggle { padding: 0; border: 0; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; }
+    .brand-toggle:hover { transform: translateY(-1px) scale(1.03); box-shadow: 0 13px 28px rgba(79, 70, 229, .42), inset 0 0 0 1px rgba(255, 255, 255, .25); }
+    .sidebar-tools { display: grid; gap: 7px; margin: auto 0 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.08); }
+    .sidebar-tool-button {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 11px;
+      background: rgba(255,255,255,.045);
+      color: #b8c1d2;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: none;
+    }
+    .sidebar-tool-button:hover { border-color: rgba(165,180,252,.20); background: rgba(255,255,255,.075); transform: none; }
+    .sidebar-tool-button .tool-icon { display: grid; place-items: center; flex: 0 0 auto; width: 23px; height: 23px; border-radius: 7px; background: rgba(129,140,248,.15); color: #c7d2fe; font-size: 13px; transition: transform .25s ease; }
+    .sidebar-user { margin-top: 0; }
+
+    .nav-item { font-size: 13px; }
+    .global-search input, .page-heading p { font-size: 13px; }
+    .eyebrow { font-size: 10px !important; }
+    .primary-button, .secondary-button { font-size: 12px; }
+    .filters select { font-size: 12px; }
+    .kpi-card p { font-size: 12px; }
+    .kpi-card > small { font-size: 10px; }
+    .kpi-trend { font-size: 9px; }
+    .panel-header h2 { font-size: 15px; }
+    .panel-header p, .legend { font-size: 11px; }
+    .bar-value, .bar-column small { font-size: 10px; }
+    .link-button { font-size: 12px; }
+    .management-row strong { font-size: 12px; }
+    .management-row small, .management-row > span { font-size: 11px; }
+    .vacations-panel th { font-size: 10px; }
+    .vacations-panel td { font-size: 12px; }
+    .person strong { font-size: 12px; }
+    .person small, .status { font-size: 10px; }
+    .period-empty { color: #9aa2b2; }
+    .row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+    .app-screen[data-screen="colaboradores"] .vacations-panel table { min-width: 980px; }
+    .collaborators-header { flex-wrap: wrap; align-items: center; }
+    .collaborator-filters { display: grid; grid-template-columns: repeat(4, minmax(125px, 1fr)); width: min(720px, 72%); }
+    .collaborator-filters select { width: 100%; min-width: 0; }
+    .registry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+    .registry-card { overflow: hidden; }
+    .registry-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fafbff; }
+    .registry-form input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #d9dce8; border-radius: 10px; background: white; color: var(--ink); font-size: 12px; outline: 0; }
+    .registry-form input:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+    .registry-form .link-button[hidden] { display: none; }
+    .registry-list { display: grid; max-height: 350px; overflow: auto; }
+    .registry-entry { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 56px; padding: 10px 18px; border-bottom: 1px solid var(--line); }
+    .registry-entry:last-child { border-bottom: 0; }
+    .registry-entry strong, .registry-entry small { display: block; }
+    .registry-entry strong { font-size: 12px; }
+    .registry-entry small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .registry-actions { display: flex; align-items: center; gap: 6px; }
+    .registry-action { min-height: 33px; padding: 0 10px; border: 1px solid #dfe2ef; border-radius: 8px; background: white; color: #4f46e5; font-size: 10px; font-weight: 800; cursor: pointer; }
+    .registry-action.delete { border-color: #fecdd3; color: #d62f45; }
+    .registry-action:hover { border-color: #aeb5ff; background: #f5f6ff; }
+    .registry-action.delete:hover { border-color: #fb7185; background: #fff1f2; }
+    .registry-empty { padding: 26px 18px; color: var(--muted); font-size: 10px; text-align: center; }
+    .backup-panel { margin-bottom: 14px; overflow: hidden; }
+    .backup-panel .panel-header { align-items: center; }
+    .backup-heading { display: flex; align-items: center; gap: 12px; }
+    .backup-icon { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; border-radius: 12px; background: linear-gradient(145deg, #ecfdf5, #d1fae5); color: #07875d; font-size: 19px; font-weight: 900; box-shadow: inset 0 0 0 1px rgba(16,185,129,.15); }
+    .backup-actions { display: flex; align-items: center; gap: 8px; }
+    .backup-actions .primary-button,
+    .backup-actions .secondary-button {
+      display: inline-flex;
+      min-height: 42px;
+      padding: 0 16px;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .backup-actions label.secondary-button { cursor: pointer; }
+    .backup-actions [hidden] { display: none !important; }
+    .backup-status { padding: 11px 18px; border-top: 1px solid var(--line); background: #fafbff; color: var(--muted); font-size: 11px; }
+    .backup-status strong { color: #16745a; }
+    .backup-status.error { background: #fff5f5; color: #b42334; }
+    .backup-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .sidebar-user .logout-button { display: grid; width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 8px; color: #a9b2c3; font-size: 14px; place-items: center; cursor: pointer; }
+    .sidebar-user .logout-button:hover { border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.07); color: white; }
+    .crud-action {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid #e1e4ed;
+      border-radius: 9px;
+      background: #f8f9fc;
+      color: #616a7d;
+      font-size: 15px;
+      line-height: 1;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .crud-action span { display: block; font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; font-weight: 800; }
+    .crud-action:hover { transform: translateY(-2px); }
+    .crud-action.edit { border-color: #c7d2fe; background: #eef2ff; color: #4338ca; box-shadow: 0 3px 9px rgba(79,70,229,.10); }
+    .crud-action.edit:hover { border-color: #818cf8; background: #e0e7ff; box-shadow: 0 6px 14px rgba(79,70,229,.18); }
+    .crud-action.delete { border-color: #fda4af; background: #fff0f2; color: #c71f3b; box-shadow: 0 3px 9px rgba(225,29,72,.10); }
+    .crud-action.delete:hover { border-color: #f43f5e; background: #ffe4e8; color: #a90f2c; box-shadow: 0 6px 14px rgba(225,29,72,.20); }
+    .delete-backdrop { background: rgba(52, 3, 13, .72); }
+    .danger-modal { overflow: hidden; border: 1px solid #fda4af; box-shadow: 0 34px 90px rgba(127, 15, 36, .36); }
+    .danger-modal .modal-head { border: 0; background: linear-gradient(135deg, #e11d48, #be123c); }
+    .danger-modal .modal-head h2, .danger-modal .modal-head button { color: white; }
+    .delete-copy { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 15px; padding: 25px 22px; background: #fff7f8; color: #7f1d2d; font-size: 12px; line-height: 1.6; }
+    .delete-copy p { margin: 3px 0 0; }
+    .delete-copy strong { color: #9f1239; }
+    .delete-warning { display: grid; place-items: center; width: 48px; height: 48px; border: 2px solid #fb7185; border-radius: 50%; background: #ffe4e8; color: #be123c; font-size: 24px; font-weight: 900; box-shadow: 0 8px 18px rgba(225,29,72,.16); }
+    .danger-kicker { display: block; color: #be123c; font-size: 10px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+    .danger-modal .modal-actions { border-color: #fecdd3; background: #fff1f3; }
+    .danger-button { border: 0; background: linear-gradient(135deg, #e11d48, #be123c); color: white; box-shadow: 0 8px 20px rgba(190,18,60,.28); }
+    .danger-button:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(190,18,60,.36); }
+    .team-card p { font-size: 11px; }
+    .team-card .team-stats small { font-size: 9px; }
+    .calendar-toolbar h3 { font-size: 16px; }
+    .calendar-toolbar button { font-size: 18px; }
+    .calendar-panel-actions { display: flex; align-items: center; gap: 10px; }
+    .calendar-view-switch { display: inline-flex; padding: 4px; border: 1px solid #e1e4ed; border-radius: 11px; background: #f7f8fc; }
+    .calendar-view-switch button { min-width: 64px; height: 32px; padding: 0 11px; border: 0; border-radius: 8px; background: transparent; color: #667085; font-size: 10px; font-weight: 800; cursor: pointer; }
+    .calendar-view-switch button:hover { color: #4f46e5; }
+    .calendar-view-switch button.active { background: white; color: #4f46e5; box-shadow: 0 4px 12px rgba(30,41,59,.10); }
+    .calendar-context-grid { min-height: 360px; }
+    .week-grid { display: grid; grid-template-columns: repeat(7, minmax(150px, 1fr)); overflow-x: auto; border: 1px solid #e3e5ed; border-radius: 14px; background: #f7f8fc; }
+    .week-day { min-height: 390px; border-right: 1px solid #e7e9f0; background: white; cursor: pointer; transition: background .18s ease, box-shadow .18s ease; }
+    .week-day:last-child { border-right: 0; }
+    .week-day:hover { background: #fafaff; box-shadow: inset 0 0 0 1px #c7d2fe; }
+    .week-day.today { box-shadow: inset 0 0 0 2px #6366f1; }
+    .week-day-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 58px; padding: 10px 11px; border-bottom: 1px solid #eceef3; background: #f8f9fc; }
+    .week-day-header span, .week-day-header strong { display: block; }
+    .week-day-header span { color: #7b8496; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .week-day-header strong { margin-top: 3px; color: #2d3445; font-size: 16px; }
+    .week-day-count { display: grid; min-width: 25px; height: 25px; padding: 0 6px; border-radius: 8px; background: #eef2ff; color: #4f46e5; font-size: 9px; font-weight: 900; place-items: center; }
+    .week-events { display: grid; gap: 7px; padding: 10px; }
+    .week-event { padding: 8px; border-radius: 9px; background: #eef2ff; color: #4338ca; }
+    .week-event strong, .week-event small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .week-event strong { font-size: 9px; }
+    .week-event small { margin-top: 3px; color: #6f75a3; font-size: 8px; }
+    .week-more { padding: 7px; border-radius: 8px; background: #f0f1f5; color: #687085; font-size: 8px; font-weight: 800; text-align: center; }
+    .day-agenda { display: grid; grid-template-columns: minmax(220px, .32fr) minmax(0, 1fr); gap: 16px; }
+    .day-agenda-summary { min-height: 360px; padding: 24px; border: 1px solid #e3e5ed; border-radius: 14px; background: linear-gradient(145deg, #f8f9ff, #eef2ff); }
+    .day-agenda-summary span, .day-agenda-summary strong, .day-agenda-summary small { display: block; }
+    .day-agenda-summary span { color: #4f46e5; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .day-agenda-summary strong { margin-top: 18px; color: #202638; font-size: 44px; letter-spacing: -.05em; }
+    .day-agenda-summary small { margin-top: 6px; color: #6c7487; font-size: 10px; line-height: 1.5; }
+    .day-agenda-list { display: grid; align-content: start; gap: 9px; min-height: 360px; }
+    .day-agenda-event { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 13px 15px; border: 1px solid #e5e7ef; border-radius: 12px; background: white; }
+    .day-agenda-avatar { display: grid; width: 38px; height: 38px; border-radius: 11px; background: #eef2ff; color: #4f46e5; font-size: 9px; font-weight: 900; place-items: center; }
+    .day-agenda-event strong, .day-agenda-event small { display: block; }
+    .day-agenda-event strong { color: #252b3b; font-size: 11px; }
+    .day-agenda-event small { margin-top: 4px; color: #7c8597; font-size: 9px; }
+    .day-agenda-period { padding: 6px 8px; border-radius: 8px; background: #eef2ff; color: #4f46e5; font-size: 9px; font-weight: 900; }
+    .calendar-empty { display: grid; min-height: 240px; padding: 30px; border: 1px dashed #d8dce7; border-radius: 14px; color: #7b8496; font-size: 11px; text-align: center; place-items: center; }
+    .weekday { font-size: 10px; }
+    .day { min-height: 104px; color: #40485b; font-size: 12px; }
+    .day[data-calendar-date] { cursor: pointer; transition: background .18s ease, box-shadow .18s ease; }
+    .day[data-calendar-date]:hover { background: #fafaff; box-shadow: inset 0 0 0 1px #c7d2fe; }
+    .day-number { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border-radius: 7px; font-weight: 750; }
+    .day.today .day-number { background: #4f46e5; color: white; box-shadow: 0 5px 12px rgba(79,70,229,.25); }
+    .event { padding: 5px 6px; border-radius: 6px; font-size: 9px; }
+    .event.more { background: #f1f2f6; color: #697286; }
+    .event.g3 { background: #f1eefe; color: #7554c7; }
+    .event.g4 { background: #e8f8ee; color: #18805a; }
+    .event.g5 { background: #fff0f4; color: #bd4764; }
+    .event.g6 { background: #edf3ff; color: #3d69ad; }
+    .alert-item strong { font-size: 12px; }
+    .alert-item small { font-size: 10px; line-height: 1.5; }
+    .alert-item button { font-size: 11px; }
+    .setting-row strong { font-size: 12px; }
+    .setting-row small, .setting-row select { font-size: 10px; }
+    .modal-body label { font-size: 10px; }
+    .modal-body input, .modal-body select { font-size: 11px; }
+    .preview-note, .toast { font-size: 11px; }
+    .gantt-kpi small { font-size: 11px; }
+    .gantt-context-toolbar > span, .gantt-context-toolbar select, .calendar-view-switch button { font-size: 11px; }
+    .gantt-controls input, .gantt-controls select, .conflict-toggle { font-size: 12px; }
+    .gantt-legend, .gantt-head-label, .gantt-month, .gantt-group { font-size: 11px; }
+    .gantt-canvas { min-width: calc(380px + var(--gantt-track-width)); }
+    .gantt-head, .gantt-row { grid-template-columns: 380px var(--gantt-track-width); }
+    .gantt-group { width: calc(380px + var(--gantt-track-width)); padding-block: 10px; }
+    .gantt-row, .gantt-track { min-height: 52px; }
+    .gantt-person { grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; padding: 7px 13px; }
+    .gantt-person-avatar { width: 30px; height: 30px; font-size: 9px; }
+    .gantt-person strong { max-width: 250px; font-size: 11px; }
+    .gantt-person small { max-width: 250px; font-size: 10px; }
+    .gantt-person-badge { font-size: 9px; }
+    .gantt-bar { height: 15px; font-size: 9px; line-height: 15px; }
+    .gantt-bar.cycle-1 { top: 8px; }
+    .gantt-bar.cycle-2 { top: 29px; }
+    .gantt-empty { top: 18px; font-size: 10px; }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --ink: #e8eaf2;
+      --line: #2a3040;
+      --muted: #9aa3b5;
+      --canvas: #0d111b;
+      --card-shadow: 0 14px 40px rgba(0, 0, 0, .24);
+    }
+    html[data-theme="dark"] body {
+      background:
+        radial-gradient(circle at 82% -10%, rgba(99, 102, 241, .14), transparent 29rem),
+        #0d111b;
+      color: #e8eaf2;
+    }
+    html[data-theme="dark"] .topbar { border-color: rgba(45, 51, 67, .92); background: rgba(17, 22, 34, .88); box-shadow: 0 1px 0 rgba(255,255,255,.025); }
+    html[data-theme="dark"] .global-search { background: #1a202e; box-shadow: inset 0 0 0 1px rgba(255,255,255,.02); }
+    html[data-theme="dark"] .global-search:focus-within { background: #1c2231; box-shadow: 0 0 0 3px rgba(129,140,248,.14), inset 0 0 0 1px #6366f1; }
+    html[data-theme="dark"] .global-search input { color: #eef0f7; }
+    html[data-theme="dark"] .global-search input::placeholder { color: #747e91; }
+    html[data-theme="dark"] .icon-button,
+    html[data-theme="dark"] .theme-toggle,
+    html[data-theme="dark"] .secondary-button,
+    html[data-theme="dark"] .calendar-toolbar button { border-color: #303748; background: #1a202e; color: #c0c6d4; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+    html[data-theme="dark"] .theme-icon { background: #2b2852; color: #c7d2fe; }
+    html[data-theme="dark"] .page-heading h1,
+    html[data-theme="dark"] .panel-header h2,
+    html[data-theme="dark"] .team-card h3,
+    html[data-theme="dark"] .modal-head h2 { color: #f2f3f8; }
+    html[data-theme="dark"] .page-heading p,
+    html[data-theme="dark"] .team-card p,
+    html[data-theme="dark"] .panel-header p { color: #929bad; }
+    html[data-theme="dark"] .filters select,
+    html[data-theme="dark"] .gantt-controls input,
+    html[data-theme="dark"] .gantt-controls select,
+    html[data-theme="dark"] .gantt-context-toolbar select,
+    html[data-theme="dark"] .setting-row select,
+    html[data-theme="dark"] .modal-body input,
+    html[data-theme="dark"] .modal-body select { border-color: #303748; background-color: #171d2a; color: #d8dce6; box-shadow: none; }
+    html[data-theme="dark"] .filters select:hover,
+    html[data-theme="dark"] .gantt-controls input:hover,
+    html[data-theme="dark"] .gantt-controls select:hover,
+    html[data-theme="dark"] .gantt-context-toolbar select:hover,
+    html[data-theme="dark"] .setting-row select:hover,
+    html[data-theme="dark"] .modal-body input:hover,
+    html[data-theme="dark"] .modal-body select:hover { border-color: #464e64; }
+    html[data-theme="dark"] .kpi-card,
+    html[data-theme="dark"] .panel,
+    html[data-theme="dark"] .team-card,
+    html[data-theme="dark"] .gantt-kpi,
+    html[data-theme="dark"] .alert-item { border-color: #292f3e; background: rgba(22, 28, 41, .97); box-shadow: var(--card-shadow); }
+    html[data-theme="dark"] .kpi-card::after { background: radial-gradient(circle, rgba(99,102,241,.12), transparent 70%); }
+    html[data-theme="dark"] .kpi-card p,
+    html[data-theme="dark"] .kpi-card > small,
+    html[data-theme="dark"] .gantt-kpi small { color: #929bad; }
+    html[data-theme="dark"] .kpi-card > strong,
+    html[data-theme="dark"] .gantt-kpi strong { color: #f0f2f7; }
+    html[data-theme="dark"] .kpi-trend.neutral { background: #252c3a; color: #aab2c2; }
+    html[data-theme="dark"] .kpi-trend.positive { background: #17382d; color: #68d6a8; }
+    html[data-theme="dark"] .kpi-trend.warning { background: #3a2d17; color: #f2bd62; }
+    html[data-theme="dark"] .kpi-trend.danger { background: #3d2028; color: #ff8994; }
+    html[data-theme="dark"] .bar-chart,
+    html[data-theme="dark"] .management-row,
+    html[data-theme="dark"] .team-card .team-stats,
+    html[data-theme="dark"] .setting-row { border-color: #292f3d; }
+    html[data-theme="dark"] .bar-track,
+    html[data-theme="dark"] .progress { background: #272e3c; }
+    html[data-theme="dark"] .annual-chart .bar-value { color: #e3e6ef; }
+    html[data-theme="dark"] .chart-tooltip { border-color: #353c4c; background: rgba(24,30,43,.98); color: #b6bdcb; box-shadow: 0 18px 42px rgba(0,0,0,.34); }
+    html[data-theme="dark"] .chart-tooltip > strong { color: #f0f2f7; }
+    html[data-theme="dark"] .chart-tooltip > small { color: #929bad; }
+    html[data-theme="dark"] .tooltip-manager-list { border-color: #353b49; }
+    html[data-theme="dark"] .tooltip-manager-row b { color: #aeb6ff; }
+    html[data-theme="dark"] .registry-form { border-color: #2f3543; background: #191e29; }
+    html[data-theme="dark"] .registry-form input,
+    html[data-theme="dark"] .registry-action { border-color: #373e4d; background: #202632; color: #d7dbff; }
+    html[data-theme="dark"] .registry-entry { border-color: #2f3543; }
+    html[data-theme="dark"] .registry-action.delete { border-color: #713844; color: #ff96a5; }
+    html[data-theme="dark"] .registry-action:hover { background: #292f3e; }
+    html[data-theme="dark"] .backup-icon { background: #153a31; color: #78e4bd; }
+    html[data-theme="dark"] .backup-status { border-color: #2f3543; background: #191e29; }
+    html[data-theme="dark"] .backup-status strong { color: #78e4bd; }
+    html[data-theme="dark"] .vacations-panel th { border-color: #2c3342; background: #1c2230; color: #929bad; }
+    html[data-theme="dark"] .vacations-panel td { border-color: #282e3b; color: #b5bccb; }
+    html[data-theme="dark"] .vacations-panel td strong { color: #dce0e9; }
+    html[data-theme="dark"] .vacations-panel tbody tr:hover { background: #1b2130; }
+    html[data-theme="dark"] .status.review { background: #3d2028; color: #ff8994; }
+    html[data-theme="dark"] .period-empty { color: #737d90; }
+    html[data-theme="dark"] .crud-action { border-color: #303748; background: #1a202e; color: #b8c0cf; }
+    html[data-theme="dark"] .crud-action:hover { border-color: #4b5469; background: #202737; }
+    html[data-theme="dark"] .crud-action.edit { border-color: #4a4e8a; background: #292752; color: #c5c9ff; }
+    html[data-theme="dark"] .crud-action.delete { border-color: #743143; background: #3d2028; color: #ff9aaa; }
+    html[data-theme="dark"] .danger-modal { border-color: #7f1d35; background: #23151a; }
+    html[data-theme="dark"] .delete-copy { background: #29171d; color: #f0a4b1; }
+    html[data-theme="dark"] .delete-copy strong { color: #ffb1bd; }
+    html[data-theme="dark"] .delete-warning { border-color: #be3451; background: #451c28; color: #ff899c; }
+    html[data-theme="dark"] .danger-kicker { color: #ff8398; }
+    html[data-theme="dark"] .danger-modal .modal-actions { border-color: #54202e; background: #24171b; }
+    html[data-theme="dark"] .person > span,
+    html[data-theme="dark"] .gantt-person-avatar { background: #292752; color: #c5c9ff; }
+    html[data-theme="dark"] .month-grid { border-color: #303746; }
+    html[data-theme="dark"] .weekday { background: #1c2230; color: #949daf; }
+    html[data-theme="dark"] .day { border-color: #2a3040; background: #171d29; color: #c0c6d3; }
+    html[data-theme="dark"] .day.muted { background: #141924; color: #596275; }
+    html[data-theme="dark"] .event { background: #292752; color: #c7d2fe; }
+    html[data-theme="dark"] .calendar-view-switch { border-color: #303748; background: #171d29; }
+    html[data-theme="dark"] .calendar-view-switch button { color: #9ca5b7; }
+    html[data-theme="dark"] .calendar-view-switch button.active { background: #2b2852; color: #c7d2fe; box-shadow: 0 5px 14px rgba(0,0,0,.22); }
+    html[data-theme="dark"] .week-grid,
+    html[data-theme="dark"] .day-agenda-summary { border-color: #303746; background: #171d29; }
+    html[data-theme="dark"] .week-day { border-color: #2a3040; background: #171d29; }
+    html[data-theme="dark"] .week-day-header { border-color: #2a3040; background: #1c2230; }
+    html[data-theme="dark"] .week-day-header strong,
+    html[data-theme="dark"] .day-agenda-summary strong,
+    html[data-theme="dark"] .day-agenda-event strong { color: #e6e8ef; }
+    html[data-theme="dark"] .week-day-count,
+    html[data-theme="dark"] .week-event,
+    html[data-theme="dark"] .day-agenda-avatar,
+    html[data-theme="dark"] .day-agenda-period { background: #292752; color: #c7d2fe; }
+    html[data-theme="dark"] .week-event small { color: #a8add0; }
+    html[data-theme="dark"] .week-more { background: #222936; color: #a2aabb; }
+    html[data-theme="dark"] .day-agenda-summary { background: linear-gradient(145deg, #1c2230, #222345); }
+    html[data-theme="dark"] .day-agenda-event { border-color: #303746; background: #171d29; }
+    html[data-theme="dark"] .calendar-empty { border-color: #3a4150; color: #9ca5b7; }
+    html[data-theme="dark"] .event.amber { background: #3d2f18; color: #f4c46f; }
+    html[data-theme="dark"] .event.blue { background: #15343d; color: #70d9ec; }
+    html[data-theme="dark"] .switch { background: #3a4252; }
+    html[data-theme="dark"] .gantt-context-toolbar,
+    html[data-theme="dark"] .gantt-controls,
+    html[data-theme="dark"] .conflict-summary { border-color: #2b3240; background: #181e2b; }
+    html[data-theme="dark"] .gantt-context-toolbar > span { color: #9ca5b7; }
+    html[data-theme="dark"] .gantt-legend { border-color: #2b3240; color: #9ba3b3; }
+    html[data-theme="dark"] .gantt-scroll { background: #151b27; scrollbar-color: #4d566b #202634; }
+    html[data-theme="dark"] .gantt-head,
+    html[data-theme="dark"] .gantt-head-label { border-color: #303746; background: #1c2230; color: #a1a9b9; }
+    html[data-theme="dark"] .gantt-month { border-color: #303746; color: #9ca5b7; }
+    html[data-theme="dark"] .gantt-day.weekend { background: #222838; color: #c7d2fe; }
+    html[data-theme="dark"] .gantt-group { border-color: #343b50; background: #242440; color: #c6c8ff; }
+    html[data-theme="dark"] .gantt-row { border-color: #282e3b; }
+    html[data-theme="dark"] .gantt-person,
+    html[data-theme="dark"] .gantt-track { border-color: #2a3040; background-color: #171d29; }
+    html[data-theme="dark"] .gantt-row:hover .gantt-person,
+    html[data-theme="dark"] .gantt-row:hover .gantt-track { background-color: #1b2130; }
+    html[data-theme="dark"] .gantt-person strong { color: #d4d8e2; }
+    html[data-theme="dark"] .gantt-person small { color: #858fa1; }
+    html[data-theme="dark"] .gantt-person-badge { background: #262d3b; color: #a2aaba; }
+    html[data-theme="dark"] .gantt-track { background-image: linear-gradient(to right, transparent calc(100% - 1px), #2a3040 calc(100% - 1px)); }
+    html[data-theme="dark"] .modal { border-color: #353c4b; background: #171d29; }
+    html[data-theme="dark"] .modal-head,
+    html[data-theme="dark"] .modal-actions { border-color: #2c3341; }
+    html[data-theme="dark"] .modal-actions { background: #1b2130; }
+    html[data-theme="dark"] .modal-body label { color: #abb3c2; }
+    html[data-theme="dark"] .toast { background: #eef0f7; color: #202638; }
+    html[data-theme="dark"] .preview-note { border-color: #393c62; background: rgba(27, 28, 47, .94); color: #c7c9ff; }
+    html[data-theme="dark"] .event.more { background: #262d3b; color: #aeb6c7; }
+    html[data-theme="dark"] .event.g3 { background: #30264a; color: #c9b2ff; }
+    html[data-theme="dark"] .event.g4 { background: #18382d; color: #72d7aa; }
+    html[data-theme="dark"] .event.g5 { background: #42232e; color: #ff9bb1; }
+    html[data-theme="dark"] .event.g6 { background: #20314d; color: #9fc1ff; }
+
+    @media (max-width: 980px) {
+      .app-shell { grid-template-columns: 1fr; }
+      html[data-sidebar="collapsed"] .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 50;
+        display: flex;
+        width: min(300px, 86vw);
+        height: 100dvh;
+        transform: translateX(-104%);
+        transition: transform .28s cubic-bezier(.22, 1, .36, 1);
+      }
+      body.sidebar-open .sidebar { transform: translateX(0); }
+      body.sidebar-open .sidebar-overlay { display: block; animation: overlay-in .2s ease; }
+      @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+      .brand { position: relative; padding-right: 48px; }
+      .sidebar-close {
+        position: absolute;
+        right: 4px;
+        top: 3px;
+        display: grid;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.07);
+        color: #d4daea;
+        font-size: 19px;
+      }
+      .menu-toggle {
+        display: grid;
+        flex: 0 0 auto;
+        width: 40px;
+        height: 40px;
+        border: 1px solid #e3e6ee;
+        border-radius: 12px;
+        background: white;
+        color: #4c556a;
+        font-size: 18px;
+        box-shadow: 0 3px 12px rgba(30,41,59,.04);
+      }
+      html[data-theme="dark"] .menu-toggle { border-color: #303748; background: #1a202e; color: #d3d8e3; }
+      html[data-sidebar="collapsed"] .sidebar { padding-inline: 18px; }
+      html[data-sidebar="collapsed"] .brand { justify-content: flex-start; padding: 0 48px 30px 10px; }
+      html[data-sidebar="collapsed"] .brand > span:nth-child(2),
+      html[data-sidebar="collapsed"] .sidebar-user > span:nth-child(2) { display: block; }
+      html[data-sidebar="collapsed"] .nav-label { display: block; }
+      html[data-sidebar="collapsed"] .nav-item { justify-content: flex-start; gap: 12px; padding-inline: 13px; font-size: 13px; }
+      html[data-sidebar="collapsed"] .nav-item span { width: 19px; }
+      html[data-sidebar="collapsed"] .nav-item .nav-icon { width: 32px; height: 32px; }
+      html[data-sidebar="collapsed"] .nav-item.active { border-color: rgba(165,180,252,.18); background: linear-gradient(105deg, rgba(99,102,241,.98), rgba(79,70,229,.84)); box-shadow: 0 10px 25px rgba(49,46,129,.34); }
+      html[data-sidebar="collapsed"] .nav-item.active .nav-icon { border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,.035); }
+      html[data-sidebar="collapsed"] .sidebar-user { grid-template-columns: 35px 1fr auto; justify-items: stretch; padding-inline: 8px; }
+      html[data-sidebar="collapsed"] .sidebar-tools .tool-label { display: inline; }
+      html[data-sidebar="collapsed"] .sidebar-tool-button { justify-content: flex-start; padding-inline: 12px; }
+      .topbar { height: 68px; padding: 0 18px; }
+      .content { padding: 26px 18px 42px; }
+      .page-heading h1 { font-size: 25px; }
+    }
+    @media (max-width: 1180px) {
+      .collaborators-header { align-items: stretch; flex-direction: column; }
+      .collaborator-filters { width: 100%; }
+    }
+    @media (max-width: 680px) {
+      .collaborator-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 420px) {
+      .collaborator-filters { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .mobile-brand { display: none; }
+      .global-search { width: 100%; }
+      .top-actions { gap: 7px; }
+      .registry-grid { grid-template-columns: 1fr; }
+      .registry-form { grid-template-columns: 1fr auto; }
+      .registry-form .link-button { grid-column: 1 / -1; justify-self: start; }
+      .backup-panel .panel-header { align-items: stretch; flex-direction: column; }
+      .backup-actions { width: 100%; }
+      .backup-actions button, .backup-actions label { flex: 1; justify-content: center; }
+      .calendar-board .panel-header { align-items: stretch; flex-direction: column; }
+      .calendar-panel-actions { align-items: stretch; flex-direction: column; }
+      .calendar-view-switch { width: 100%; }
+      .calendar-view-switch button { min-width: 0; flex: 1; }
+      .gantt-context-toolbar { align-items: stretch; flex-wrap: wrap; justify-content: flex-start; }
+      .gantt-context-toolbar > span { width: 100%; }
+      .gantt-context-toolbar .calendar-view-switch { width: min(220px, 100%); }
+      .gantt-context-toolbar select { min-width: 150px; flex: 1; }
+      .day-agenda { grid-template-columns: 1fr; }
+      .day-agenda-summary { min-height: auto; }
+    }
+    @media (max-width: 520px) {
+      .topbar { gap: 10px; }
+      .global-search { min-width: 0; }
+      .global-search input { font-size: 11px; }
+      .top-actions .primary-button { display: none; }
+      .preview-note { right: 12px; bottom: 12px; }
+    }
+
+  </style>
+</head>
+<body>
+  <section id="auth-gate" class="auth-gate" aria-label="Acesso à plataforma">
+    <div class="auth-brand-panel">
+      <div class="auth-brand-top"><img src="pcm-logo.svg" alt="PCM"></div>
+      <div class="auth-brand-copy">
+        <h1>Gestão de Férias</h1>
+        <p>Uma visão centralizada da cadeia de manutenção para organizar períodos, antecipar conflitos e apoiar decisões com segurança.</p>
+        <ul aria-label="Recursos principais">
+          <li><span>✓</span>Visão consolidada por gestor, setor e cargo</li>
+          <li><span>✓</span>Calendário anual e análise de conflitos</li>
+          <li><span>✓</span>Dados compartilhados com atualização segura</li>
+        </ul>
+      </div>
+      <small class="auth-manager">Gestor: Leonardo Bastos</small>
+    </div>
+    <div class="auth-form-panel">
+      <div class="auth-card">
+        <span class="auth-kicker">ACESSO À PLATAFORMA</span>
+        <h2>Entrar na plataforma</h2>
+        <p>Utilize sua conta para acessar o planejamento compartilhado de férias.</p>
+        <form id="auth-form">
+          <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="nome@empresa.com.br"></label>
+          <label>Senha<input name="password" type="password" autocomplete="current-password" minlength="8" placeholder="Digite sua senha"></label>
+          <button class="auth-primary" type="submit" value="login">Entrar na plataforma</button>
+          <div class="auth-secondary-actions">
+            <button type="submit" value="signup">Criar conta</button>
+            <button type="submit" value="reset" formnovalidate>Esqueci minha senha</button>
+          </div>
+        </form>
+        <form id="recovery-form" hidden>
+          <label>Nova senha<input name="newPassword" type="password" required minlength="8" autocomplete="new-password"></label>
+          <button class="auth-primary" type="submit">Salvar nova senha</button>
+        </form>
+        <p id="auth-message" role="status" aria-live="polite">Conectando…</p>
+        <p class="auth-help"><span aria-hidden="true"></span> Ambiente protegido · Supabase</p>
+      </div>
+    </div>
+  </section>
+  <main class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Menu principal">
+      <div class="brand"><button class="brand-mark brand-toggle" type="button" data-sidebar-collapse aria-pressed="false" aria-label="Recolher menu lateral" title="Recolher ou expandir menu"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M8 2v4M16 2v4M3 10h18"></path><path d="m8.5 15.5 2 2 4.5-4.5"></path></svg></button><span><strong>Gestão de Férias</strong><small>Manutenção</small></span><button class="sidebar-close" type="button" data-sidebar-close aria-label="Fechar menu">×</button></div>
+      <nav aria-label="Navegação principal">
+        <a class="nav-item active" href="#visao" data-screen-link="visao" title="Visão geral"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg></span> Visão geral</a>
+        <a class="nav-item" href="#calendario" data-screen-link="calendario" title="Calendário"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M8 2v4M16 2v4M3 10h18"></path><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path></svg></span> Calendário</a>
+        <a class="nav-item" href="#gantt" data-screen-link="gantt" title="Gantt de conflitos"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h3M4 12h1M4 18h5"></path><rect x="8" y="4" width="11" height="4" rx="1"></rect><rect x="6" y="10" width="9" height="4" rx="1"></rect><rect x="10" y="16" width="10" height="4" rx="1"></rect></svg></span> Gantt de conflitos</a>
+        <a class="nav-item" href="#colaboradores" data-screen-link="colaboradores" title="Colaboradores"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span> Colaboradores</a>
+        <a class="nav-item" href="#equipes" data-screen-link="equipes" title="Gestões e equipes"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="5" rx="1.5"></rect><rect x="3" y="17" width="6" height="5" rx="1.5"></rect><rect x="15" y="17" width="6" height="5" rx="1.5"></rect><path d="M12 7v4M6 17v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path></svg></span> Gestões e equipes</a>
+        <a class="nav-item" href="#alertas" data-screen-link="alertas" title="Alertas"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 3.6 2.4 18a2 2 0 0 0 1.8 3h15.6a2 2 0 0 0 1.8-3L13.7 3.6a2 2 0 0 0-3.4 0Z"></path><path d="M12 9v4M12 17h.01"></path></svg></span> Alertas</a>
+        <p class="nav-label">ADMINISTRAÇÃO</p>
+        <a class="nav-item" href="#config" data-screen-link="config" title="Configurações"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"></path><path d="M1 14h6M9 8h6M17 16h6"></path></svg></span> Configurações</a>
+      </nav>
+      <div class="sidebar-tools">
+        <button class="sidebar-tool-button theme-toggle" type="button" data-theme-toggle aria-label="Ativar tema escuro"><span class="tool-icon theme-icon" aria-hidden="true">◐</span><span class="tool-label theme-text">Tema dark</span></button>
+      </div>
+      <div class="sidebar-user"><span class="avatar" id="sidebar-user-avatar">US</span><span><strong id="sidebar-user-name">Usuário</strong><small id="sidebar-user-email">Conta autenticada</small></span><button class="logout-button" type="button" data-logout aria-label="Sair da plataforma" title="Sair">↪</button></div>
+    </aside>
+    <button class="sidebar-overlay" type="button" data-sidebar-close aria-label="Fechar menu"></button>
+    <section class="workspace" id="visao">
+      <header class="topbar">
+        <button class="menu-toggle" type="button" data-sidebar-open aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu">☰</button>
+        <div class="mobile-brand" aria-label="Gestão de Férias"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M8 2v4M16 2v4M3 10h18"></path><path d="m8.5 15.5 2 2 4.5-4.5"></path></svg></div>
+        <label class="global-search"><span>⌕</span><input id="search" placeholder="Buscar colaborador ou cargo..."></label>
+        <div class="top-actions"><button class="icon-button" data-screen-button="alertas" aria-label="Abrir notificações"><span class="notification-bell" aria-hidden="true">🔔</span><span class="notification-dot"></span></button><button class="primary-button" data-open-modal>＋ Nova programação</button></div>
+      </header>
+      <div class="content">
+        <section class="app-screen active" data-screen="visao">
+        <div class="page-heading">
+          <div><p class="eyebrow">PLANEJAMENTO 2026</p><h1>Visão geral da manutenção</h1><p>Acompanhe férias, cobertura das equipes e possíveis conflitos.</p></div>
+          <div class="filters"><select id="manager" aria-label="Filtrar visão geral por gestor"><option value="">Todos os gestores</option></select><select id="overview-year"><option value="2026">2026</option><option value="2027">2027</option></select></div>
+        </div>
+        <section class="kpi-grid">
+          <article class="kpi-card"><div class="kpi-icon blue">♙</div><span class="kpi-trend neutral" id="overview-management-count">—</span><p>Colaboradores</p><strong id="overview-collaborators-count">—</strong><small id="overview-collaborators-summary">—</small></article>
+          <article class="kpi-card"><div class="kpi-icon teal">✓</div><span class="kpi-trend positive">Planejamento</span><p>Com férias planejadas</p><strong id="overview-planned-count">—</strong><small id="overview-planned-summary">—</small></article>
+          <article class="kpi-card"><div class="kpi-icon amber">◷</div><span class="kpi-trend warning">Atenção</span><p>Aguardando planejamento</p><strong id="overview-unplanned-count">—</strong><small id="overview-unplanned-summary">—</small></article>
+          <article class="kpi-card"><div class="kpi-icon red">!</div><span class="kpi-trend danger">Revisar</span><p>Inconsistências</p><strong id="overview-invalid-count">—</strong><small>Períodos com datas inconsistentes</small></article>
+        </section>
+        <section class="dashboard-grid">
+          <article class="panel calendar-panel" id="calendario">
+            <div class="panel-header"><div><h2>Distribuição anual</h2><p>Concentração de férias programadas por mês</p></div><span class="legend"><i></i> Colaboradores em férias</span></div>
+            <div class="bar-chart annual-chart" id="annual-chart" aria-label="Distribuição anual de colaboradores em férias"></div>
+          </article>
+          <article class="panel management-panel" id="equipes">
+              <div class="panel-header"><div><h2>Cobertura por gestão</h2><p>Planejamento atual da equipe</p></div><button class="link-button" data-screen-button="equipes">Ver todas</button></div>
+            <div class="management-list" id="management-list"></div>
+          </article>
+        </section>
+        <article class="panel vacations-panel" id="colaboradores">
+          <div class="panel-header"><div><h2>Próximas férias</h2><p>Programações mais próximas dentro dos filtros selecionados</p></div><button class="secondary-button" data-screen-button="calendario">Ver calendário completo</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Gestão</th><th>Período</th><th>Dias</th><th>Status</th><th></th></tr></thead><tbody id="vacations"></tbody></table></div>
+        </article>
+        </section>
+
+        <section class="app-screen" data-screen="calendario">
+          <div class="page-heading"><div><p class="eyebrow">CALENDÁRIO ANUAL</p><h1>Calendário de férias</h1><p>Visualize os dois períodos planejados e a concentração por equipe.</p></div><div class="filters"><select id="calendar-management"><option value="">Todas as gestões</option></select><select id="calendar-year"><option value="2026">2026</option><option value="2027">2027</option></select></div></div>
+          <article class="panel calendar-board">
+            <div class="panel-header"><div><h2 id="calendar-context-heading">Programação mensal</h2><p id="calendar-context-description">As cores identificam as gestões com férias no período.</p></div><div class="calendar-panel-actions"><div class="calendar-view-switch" role="group" aria-label="Contexto do calendário"><button type="button" data-calendar-view="day" aria-pressed="false">Dia</button><button type="button" data-calendar-view="week" aria-pressed="false">Semana</button><button class="active" type="button" data-calendar-view="month" aria-pressed="true">Mês</button></div><button class="primary-button" data-open-modal>＋ Programar férias</button></div></div>
+            <div class="calendar-toolbar"><button type="button" id="calendar-prev" aria-label="Período anterior">‹</button><h3 id="calendar-title">Agosto de 2026</h3><button type="button" id="calendar-next" aria-label="Próximo período">›</button></div>
+            <div class="month-grid calendar-context-grid" id="calendar-grid" aria-live="polite"></div>
+          </article>
+        </section>
+
+        <section class="app-screen" data-screen="gantt">
+          <div class="page-heading"><div><p class="eyebrow">VISÃO CONSOLIDADA</p><h1>Gantt de conflitos</h1><p>Todos os colaboradores em uma linha anual, com os dois ciclos e sobreposições destacadas.</p></div><button class="secondary-button" id="gantt-reset">Limpar filtros</button></div>
+          <section class="gantt-kpis" aria-label="Resumo do Gantt">
+            <article class="panel gantt-kpi"><small>Colaboradores na base</small><strong id="gantt-total">—</strong></article>
+            <article class="panel gantt-kpi"><small>Com período registrado</small><strong id="gantt-planned">—</strong></article>
+            <article class="panel gantt-kpi danger"><small>Períodos em conflito</small><strong id="gantt-conflicts">—</strong></article>
+            <article class="panel gantt-kpi"><small>Sem planejamento</small><strong id="gantt-unplanned">—</strong></article>
+          </section>
+          <article class="panel" aria-label="Gráfico de Gantt de férias">
+            <div class="gantt-context-toolbar"><span>Escala do Gantt</span><div class="calendar-view-switch" role="group" aria-label="Escala do Gantt"><button class="active" type="button" data-gantt-scale="month" aria-pressed="true">Mês</button><button type="button" data-gantt-scale="day" aria-pressed="false">Dia</button></div><select id="gantt-month" aria-label="Selecionar mês da visão diária" hidden></select></div>
+            <div class="gantt-controls">
+              <input id="gantt-search" type="search" placeholder="Buscar colaborador, cargo ou setor..." aria-label="Buscar no Gantt">
+              <select id="gantt-management" aria-label="Filtrar gestão"><option value="">Todas as gestões</option></select>
+              <select id="gantt-role" aria-label="Filtrar cargo"><option value="">Todos os cargos</option></select>
+              <select id="gantt-year" aria-label="Selecionar ano"><option value="2026">2026</option><option value="2027">2027</option></select>
+              <label class="conflict-toggle"><input id="gantt-only-conflicts" type="checkbox"> Somente conflitos</label>
+            </div>
+            <div class="gantt-legend"><span><i></i> 1º período</span><span><i class="cycle-two"></i> 2º período</span><span><i class="warning"></i> Atenção no mesmo setor</span><span><i class="critical"></i> Conflito de cargo</span></div>
+            <div class="gantt-scroll" id="gantt-scroll"><div class="gantt-canvas" id="gantt-canvas"><div class="gantt-head"><div class="gantt-head-label">Colaborador / cargo</div><div class="gantt-months" id="gantt-months"></div></div><div id="gantt-body"></div></div></div>
+            <div class="conflict-summary"><strong>Critério atual de conflito</strong><small>Sobreposição na mesma gestão e cargo; atenção para a mesma gestão e setor.</small><button class="secondary-button" data-screen-button="alertas">Abrir alertas</button></div>
+          </article>
+        </section>
+
+        <section class="app-screen" data-screen="colaboradores">
+          <div class="page-heading"><div><p class="eyebrow">BASE CONSOLIDADA</p><h1>Colaboradores</h1><p>Cadastro, cargo, gestão e dois ciclos de férias por colaborador.</p></div><button class="primary-button" type="button" data-collaborator-new>＋ Novo colaborador</button></div>
+          <article class="panel vacations-panel">
+            <div class="panel-header collaborators-header"><div><h2 id="collaborators-count">—</h2><p id="collaborators-summary">—</p></div><div class="filters collaborator-filters"><select id="collaborators-management" aria-label="Filtrar gestor"><option value="">Todos os gestores</option></select><select id="collaborators-sector" aria-label="Filtrar setor"><option value="">Todos os setores</option></select><select id="collaborators-role" aria-label="Filtrar cargo"><option value="">Todos os cargos</option></select><select id="collaborators-status" aria-label="Filtrar status"><option value="">Todos os status</option><option value="Ativo">Ativo</option><option value="Afastado">Afastado</option><option value="A REVISAR">A revisar</option></select></div></div>
+            <div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Cargo</th><th>Gestor</th><th>Setor</th><th>1º período</th><th>2º período</th><th>Status</th><th></th></tr></thead><tbody id="collaborators-body"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="app-screen" data-screen="equipes">
+          <div class="page-heading"><div><p class="eyebrow">CADEIA DE MANUTENÇÃO</p><h1>Gestões e equipes</h1><p>Acompanhe o planejamento e a cobertura de cada responsável.</p></div><button class="secondary-button">Exportar visão</button></div>
+          <div class="screen-grid" id="teams-grid"></div>
+        </section>
+
+        <section class="app-screen" data-screen="alertas">
+          <div class="page-heading"><div><p class="eyebrow">CONTROLE OPERACIONAL</p><h1>Alertas e divergências</h1><p>Pontos que precisam de análise antes da aprovação das férias.</p></div><button class="secondary-button">Marcar todos como lidos</button></div>
+          <div class="alert-list"></div>
+        </section>
+
+        <section class="app-screen" data-screen="config">
+          <div class="page-heading"><div><p class="eyebrow">ADMINISTRAÇÃO</p><h1>Configurações</h1><p>Cadastros centrais e regras utilizadas em todo o planejamento.</p></div></div>
+          <article class="panel backup-panel"><div class="panel-header"><div class="backup-heading"><span class="backup-icon" aria-hidden="true">⇩</span><div><h2>Segurança dos dados</h2><p>Baixe uma cópia completa antes de atualizações ou da publicação final.</p></div></div><div class="backup-actions"><button class="primary-button" type="button" id="download-backup">Baixar backup JSON</button><label class="secondary-button" for="restore-backup-file" hidden role="button" tabindex="0">Restaurar backup</label><button class="secondary-button" type="button" id="recover-safety-snapshot" hidden>Recuperar anterior</button><input class="backup-file-input" id="restore-backup-file" type="file" accept="application/json,.json"></div></div><div class="backup-status" id="backup-status">—</div></article>
+          <div class="registry-grid">
+            <article class="panel registry-card"><div class="panel-header"><div><h2>Gestores</h2><p>Cadastro único usado nos colaboradores, filtros e relatórios.</p></div></div><form class="registry-form" id="manager-registry-form"><input id="manager-registry-input" required autocomplete="off" placeholder="Nome do gestor" aria-label="Nome do gestor"><button class="primary-button" type="submit">＋ Adicionar</button><button class="link-button" type="button" data-registry-cancel="manager" hidden>Cancelar edição</button></form><div class="registry-list" id="manager-registry-list"></div></article>
+            <article class="panel registry-card"><div class="panel-header"><div><h2>Setores</h2><p>Lista oficial disponível no cadastro dos colaboradores.</p></div></div><form class="registry-form" id="sector-registry-form"><input id="sector-registry-input" required autocomplete="off" placeholder="Nome do setor" aria-label="Nome do setor"><button class="primary-button" type="submit">＋ Adicionar</button><button class="link-button" type="button" data-registry-cancel="sector" hidden>Cancelar edição</button></form><div class="registry-list" id="sector-registry-list"></div></article>
+          </div>
+          <article class="panel"><div class="panel-header"><div><h2>Regras e notificações</h2><p>Estas alterações são apenas demonstrativas nesta versão local.</p></div></div><div class="settings-list">
+            <div class="setting-row"><div><strong>Alertar sobre sobreposição de cargo</strong><small>Notifica quando profissionais do mesmo cargo coincidem.</small></div><button class="switch on" aria-label="Ativar alerta"></button></div>
+            <div class="setting-row"><div><strong>Considerar colaboradores afastados</strong><small>Inclui afastados no cálculo da cobertura disponível.</small></div><button class="switch" aria-label="Considerar afastados"></button></div>
+            <div class="setting-row"><div><strong>Limite simultâneo por cargo</strong><small>Quantidade máxima de pessoas do mesmo cargo em férias.</small></div><select><option>2 colaboradores</option><option>1 colaborador</option><option>3 colaboradores</option></select></div>
+            <div class="setting-row"><div><strong>Fracionamento padrão</strong><small>Modelo sugerido ao criar uma nova programação.</small></div><select><option>20 + 10 dias</option><option>15 + 15 dias</option><option>30 dias</option></select></div>
+          </div></article>
+        </section>
+      </div>
+    </section>
+  </main>
+  <div class="modal-backdrop" id="vacation-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal"><div class="modal-head"><h2 id="modal-title">Programar férias</h2><button data-close-modal aria-label="Fechar">×</button></div>
+      <form id="vacation-form"><div class="modal-body">
+        <label class="full">Colaborador<div class="collaborator-combobox"><span class="collaborator-search-icon" aria-hidden="true"></span><input id="vacation-collaborator-search" type="search" autocomplete="off" placeholder="Busque por nome, cargo ou setor..." role="combobox" aria-autocomplete="list" aria-controls="vacation-collaborator-options" aria-expanded="false" required><span class="collaborator-search-chevron" aria-hidden="true">⌄</span><input id="vacation-collaborator" type="hidden"><div class="collaborator-options" id="vacation-collaborator-options" role="listbox" hidden></div></div></label>
+        <label>Ciclo<select id="vacation-cycle"><option value="1">1º período</option><option value="2">2º período</option></select></label><label>Status<select id="vacation-status"><option>Planejada</option><option>Solicitada</option><option>Aprovada</option><option>Programada</option><option>Realizada</option></select></label>
+        <label>Data inicial<input id="vacation-start" type="date" required></label><label>Data final<input id="vacation-end" type="date" required></label>
+      </div><div class="modal-actions"><button type="button" class="secondary-button" data-close-modal>Cancelar</button><button type="submit" class="primary-button">Salvar programação</button></div></form>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="collaborator-modal" role="dialog" aria-modal="true" aria-labelledby="collaborator-modal-title">
+    <div class="modal"><div class="modal-head"><h2 id="collaborator-modal-title">Novo colaborador</h2><button type="button" data-collaborator-close aria-label="Fechar">×</button></div>
+      <form id="collaborator-form"><input type="hidden" id="collaborator-original-id"><div class="modal-body">
+        <label>Matrícula<input id="collaborator-id" required autocomplete="off"></label>
+        <label>Status<select id="collaborator-status" required><option>Ativo</option><option>Afastado</option><option>A REVISAR</option></select></label>
+        <label class="full">Nome completo<input id="collaborator-name" required autocomplete="off"></label>
+        <label class="full">Cargo<input id="collaborator-role" required autocomplete="off"></label>
+        <label>Gestor<select id="collaborator-management" required><option value="">Selecione...</option></select></label>
+        <label>Setor<select id="collaborator-sector" required><option value="">Selecione...</option></select></label>
+        <label>Admissão<input id="collaborator-admission" type="date"></label>
+      </div><div class="modal-actions"><button type="button" class="secondary-button" data-collaborator-close>Cancelar</button><button type="submit" class="primary-button">Salvar colaborador</button></div></form>
+    </div>
+  </div>
+  <div class="modal-backdrop delete-backdrop" id="delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="modal danger-modal"><div class="modal-head"><h2 id="delete-modal-title">Excluir colaborador</h2><button type="button" data-delete-close aria-label="Fechar">×</button></div>
+      <div class="delete-copy"><span class="delete-warning" aria-hidden="true">!</span><div><span class="danger-kicker">Atenção · ação destrutiva</span><p>Você está prestes a excluir <strong id="delete-collaborator-name"></strong>. O cadastro será removido desta prévia local.</p></div></div>
+      <div class="modal-actions"><button type="button" class="secondary-button" data-delete-close>Cancelar</button><button type="button" class="primary-button danger-button" id="delete-confirm">Excluir definitivamente</button></div>
+    </div>
+  </div>
+  <div class="modal-backdrop delete-backdrop" id="restore-modal" role="alertdialog" aria-modal="true" aria-labelledby="restore-modal-title">
+    <div class="modal danger-modal"><div class="modal-head"><h2 id="restore-modal-title">Restaurar backup</h2><button type="button" data-restore-close aria-label="Fechar">×</button></div>
+      <div class="delete-copy"><span class="delete-warning" aria-hidden="true">!</span><div><span class="danger-kicker">Confirme a substituição dos dados locais</span><p id="restore-backup-summary">O conteúdo atual será substituído pelos dados do arquivo selecionado.</p></div></div>
+      <div class="modal-actions"><button type="button" class="secondary-button" data-restore-close>Cancelar</button><button type="button" class="primary-button danger-button" id="restore-confirm">Restaurar dados</button></div>
+    </div>
+  </div>
+  <div class="preview-note" id="environment-note">Ambiente de testes · Supabase</div>
+  <div class="toast" id="toast">Alteração registrada nesta prévia local.</div>
+  <script src="config.js"></script>
+  <script src="supabase-adapter.js"></script>
+  <script>
+    const manager = document.querySelector('#manager');
+    const sidebarUserAvatar = document.querySelector('#sidebar-user-avatar');
+    const sidebarUserName = document.querySelector('#sidebar-user-name');
+    const sidebarUserEmail = document.querySelector('#sidebar-user-email');
+    const overviewYear = document.querySelector('#overview-year');
+    const annualChart = document.querySelector('#annual-chart');
+    const search = document.querySelector('#search');
+    const rows = [...document.querySelectorAll('#vacations tr')];
+    const screens = [...document.querySelectorAll('[data-screen]')];
+    const screenLinks = [...document.querySelectorAll('[data-screen-link]')];
+    const modal = document.querySelector('#vacation-modal');
+    const vacationCollaboratorSearch = document.querySelector('#vacation-collaborator-search');
+    const vacationCollaborator = document.querySelector('#vacation-collaborator');
+    const vacationCollaboratorOptions = document.querySelector('#vacation-collaborator-options');
+    const toast = document.querySelector('#toast');
+    const sidebar = document.querySelector('#sidebar');
+    const sidebarOpenButton = document.querySelector('[data-sidebar-open]');
+    const sidebarCollapseButton = document.querySelector('[data-sidebar-collapse]');
+    const themeToggle = document.querySelector('[data-theme-toggle]');
+    const calendarManagement = document.querySelector('#calendar-management');
+    const calendarYear = document.querySelector('#calendar-year');
+    const calendarGrid = document.querySelector('#calendar-grid');
+    const calendarTitle = document.querySelector('#calendar-title');
+    const calendarContextHeading = document.querySelector('#calendar-context-heading');
+    const calendarContextDescription = document.querySelector('#calendar-context-description');
+    const calendarViewButtons = [...document.querySelectorAll('[data-calendar-view]')];
+    const collaboratorsRole = document.querySelector('#collaborators-role');
+    const collaboratorsStatus = document.querySelector('#collaborators-status');
+    const collaboratorsManagement = document.querySelector('#collaborators-management');
+    const collaboratorsSector = document.querySelector('#collaborators-sector');
+    const collaboratorsBody = document.querySelector('#collaborators-body');
+    const collaboratorsCount = document.querySelector('#collaborators-count');
+    const collaboratorsSummary = document.querySelector('#collaborators-summary');
+    const collaboratorModal = document.querySelector('#collaborator-modal');
+    const collaboratorForm = document.querySelector('#collaborator-form');
+    const collaboratorModalTitle = document.querySelector('#collaborator-modal-title');
+    const deleteModal = document.querySelector('#delete-modal');
+    const deleteCollaboratorName = document.querySelector('#delete-collaborator-name');
+    const managementList = document.querySelector('#management-list');
+    const teamsGrid = document.querySelector('#teams-grid');
+    const managerRegistryForm = document.querySelector('#manager-registry-form');
+    const managerRegistryInput = document.querySelector('#manager-registry-input');
+    const managerRegistryList = document.querySelector('#manager-registry-list');
+    const sectorRegistryForm = document.querySelector('#sector-registry-form');
+    const sectorRegistryInput = document.querySelector('#sector-registry-input');
+    const sectorRegistryList = document.querySelector('#sector-registry-list');
+    const backupStatus = document.querySelector('#backup-status');
+    const restoreBackupFile = document.querySelector('#restore-backup-file');
+    const recoverSafetySnapshot = document.querySelector('#recover-safety-snapshot');
+    const restoreModal = document.querySelector('#restore-modal');
+    const restoreBackupSummary = document.querySelector('#restore-backup-summary');
+    const localPreviewOrigin = false; // Shared Supabase data on every host.
+    let sharedDataMode = false;
+    let sharedDataRevision = 0;
+    let sharedSaveQueue = Promise.resolve();
+    const ganttData = { summary: {}, people: [] };
+    let collaboratorsLoadedFromStorage = false;
+    try { if (localPreviewOrigin) {
+      const savedCollaborators = JSON.parse(localStorage.getItem('gestao-ferias-collaborators') || 'null');
+      if (Array.isArray(savedCollaborators)) {
+        ganttData.people = savedCollaborators;
+        collaboratorsLoadedFromStorage = true;
+      }
+    }} catch (_) {}
+    const collaboratorIdsAssigned = ensureCollaboratorRecordIds();
+    const derivedRegistries = {
+      managers: deriveRegistryEntries(ganttData.people.map(person => person.management), 'manager'),
+      sectors: deriveRegistryEntries(ganttData.people.map(person => person.sector), 'sector')
+    };
+    let savedRegistries = {};
+    try { if (localPreviewOrigin) savedRegistries = JSON.parse(localStorage.getItem('gestao-ferias-registries') || '{}') || {}; } catch (_) {}
+    const registries = {
+      managers: mergeRegistryEntries(savedRegistries.managers, derivedRegistries.managers, 'manager'),
+      sectors: mergeRegistryEntries(savedRegistries.sectors, derivedRegistries.sectors, 'sector')
+    };
+    const collaboratorsCanonicalized = canonicalizeCollaboratorCatalogValues();
+    recalculatePlanningConflicts();
+    persistRegistries();
+    if (collaboratorsLoadedFromStorage && (collaboratorsCanonicalized || collaboratorIdsAssigned)) {
+      try { localStorage.setItem('gestao-ferias-collaborators', JSON.stringify(ganttData.people)); } catch (_) {}
+    }
+    const ganttSearch = document.querySelector('#gantt-search');
+    const ganttManagement = document.querySelector('#gantt-management');
+    const ganttRole = document.querySelector('#gantt-role');
+    const ganttYear = document.querySelector('#gantt-year');
+    const ganttOnlyConflicts = document.querySelector('#gantt-only-conflicts');
+    const ganttMonth = document.querySelector('#gantt-month');
+    const ganttCanvas = document.querySelector('#gantt-canvas');
+    const ganttScaleButtons = [...document.querySelectorAll('[data-gantt-scale]')];
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const monthNamesLong = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    let ganttInitialized = false;
+    let ganttScale = 'month';
+    let calendarInitialized = false;
+    let collaboratorsInitialized = false;
+    let pendingDeleteId = '';
+    let collaboratorSearchActiveIndex = -1;
+    let pendingRestoreBackup = null;
+    let calendarMonth = 7;
+    let calendarDisplayYear = 2026;
+    let calendarView = 'month';
+    let calendarFocusDate = new Date(Date.UTC(2026, 7, 25));
+
+    function loginDisplayName(email) {
+      const localPart = String(email).split('@')[0].replace(/[._-]+/g, ' ').trim();
+      return localPart ? formatLabel(localPart) : 'Usuário';
+    }
+
+    function applyUserIdentity(session = {}) {
+      const name = session.name || (session.email ? loginDisplayName(session.email) : 'Usuário');
+      const email = session.email || 'Prévia local';
+      sidebarUserName.textContent = name;
+      sidebarUserEmail.textContent = email;
+      sidebarUserEmail.title = email;
+      sidebarUserAvatar.textContent = initials(name) || 'SU';
+      window.scrollTo({ top: 0 });
+    }
+
+    async function initializeSharedData() {
+      await window.VacationBackend.ready();
+      const response = await window.VacationBackend.requestState();
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || 'Não foi possível carregar o banco compartilhado.');
+      sharedDataMode = true;
+      applySharedStatePayload(payload, false);
+      applyUserIdentity(payload.session);
+      document.querySelector('#environment-note').textContent = 'Dados compartilhados · Supabase';
+      document.querySelector('#environment-note').title = 'Atualização automática a cada 30 segundos e ao retornar à janela.';
+      return true;
+    }
+
+    function logout() { window.VacationBackend.logout(); }
+
+    function updateThemeButton() {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      themeToggle.querySelector('.theme-icon').textContent = dark ? '☀' : '◐';
+      themeToggle.querySelector('.theme-text').textContent = dark ? 'Tema light' : 'Tema dark';
+      themeToggle.setAttribute('aria-label', dark ? 'Ativar tema claro' : 'Ativar tema escuro');
+    }
+
+    function toggleTheme() {
+      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = nextTheme;
+      document.querySelector('meta[name="theme-color"]').content = nextTheme === 'dark' ? '#0d111b' : '#111827';
+      try { localStorage.setItem('gestao-ferias-theme', nextTheme); } catch (_) {}
+      updateThemeButton();
+    }
+
+    function setSidebar(open) {
+      document.body.classList.toggle('sidebar-open', open);
+      sidebarOpenButton.setAttribute('aria-expanded', String(open));
+    }
+
+    function updateSidebarCollapseButton() {
+      const collapsed = document.documentElement.dataset.sidebar === 'collapsed';
+      sidebarCollapseButton.setAttribute('aria-pressed', String(collapsed));
+      sidebarCollapseButton.setAttribute('aria-label', collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral');
+      sidebarCollapseButton.title = collapsed ? 'Expandir menu' : 'Recolher menu';
+    }
+
+    function toggleSidebarCollapse() {
+      const nextState = document.documentElement.dataset.sidebar === 'collapsed' ? 'expanded' : 'collapsed';
+      document.documentElement.dataset.sidebar = nextState;
+      try { localStorage.setItem('gestao-ferias-sidebar', nextState); } catch (_) {}
+      updateSidebarCollapseButton();
+    }
+
+    function registryKey(value, type) {
+      let key = normalizeText(value).trim().replace(/\s+/g, ' ');
+      if (type === 'manager') key = key.replace(/^gestao\s+/, '');
+      return key;
+    }
+
+    function registryDisplayName(value, type) {
+      const clean = String(value || '').trim();
+      return type === 'manager' ? formatManagerName(clean) : formatLabel(clean);
+    }
+
+    function deriveRegistryEntries(values, type) {
+      const entries = new Map();
+      values.forEach(value => {
+        const key = registryKey(value, type);
+        if (key && !entries.has(key)) entries.set(key, { key, name: registryDisplayName(value, type) });
+      });
+      return [...entries.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    }
+
+    function mergeRegistryEntries(savedEntries, derivedEntries, type) {
+      const entries = new Map(derivedEntries.map(entry => [entry.key, entry]));
+      if (Array.isArray(savedEntries)) {
+        savedEntries.forEach(savedEntry => {
+          const rawName = typeof savedEntry === 'string' ? savedEntry : savedEntry?.name;
+          const key = registryKey(rawName, type);
+          if (key) entries.set(key, { key, name: registryDisplayName(rawName, type) });
+        });
+      }
+      return [...entries.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    }
+
+    function registryCollection(type) {
+      return type === 'manager' ? registries.managers : registries.sectors;
+    }
+
+    function canonicalRegistryValue(value, type) {
+      const key = registryKey(value, type);
+      return registryCollection(type).find(entry => entry.key === key)?.name || registryDisplayName(value, type);
+    }
+
+    function canonicalizeCollaboratorCatalogValues() {
+      let changed = false;
+      ganttData.people.forEach(person => {
+        const management = canonicalRegistryValue(person.management, 'manager');
+        const sector = canonicalRegistryValue(person.sector, 'sector');
+        const role = normalizeRoleLabel(person.role);
+        if (person.management !== management) { person.management = management; changed = true; }
+        if (person.sector !== sector) { person.sector = sector; changed = true; }
+        if (person.role !== role) { person.role = role; changed = true; }
+      });
+      return changed;
+    }
+
+    function ensureCollaboratorRecordIds() {
+      let changed = false;
+      ganttData.people.forEach((person, index) => {
+        if (person.id) return;
+        const nameKey = normalizeText(person.name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        person.id = `local-${String(index + 1).padStart(3, '0')}-${nameKey}`;
+        changed = true;
+      });
+      return changed;
+    }
+
+    function recalculatePlanningConflicts() {
+      const levelWeight = { none: 0, warning: 1, critical: 2 };
+      const setConflictLevel = (period, level) => {
+        if (levelWeight[level] > levelWeight[period.conflictLevel] || !period.conflictLevel) period.conflictLevel = level;
+      };
+
+      ganttData.people.forEach(person => person.periods.forEach(period => {
+        period.conflicts = [];
+        period.conflictLevel = 'none';
+      }));
+
+      for (let firstIndex = 0; firstIndex < ganttData.people.length; firstIndex += 1) {
+        const firstPerson = ganttData.people[firstIndex];
+        for (let secondIndex = firstIndex + 1; secondIndex < ganttData.people.length; secondIndex += 1) {
+          const secondPerson = ganttData.people[secondIndex];
+          if (firstPerson.management !== secondPerson.management) continue;
+
+          const sameRole = firstPerson.role === secondPerson.role;
+          const sameSector = firstPerson.sector === secondPerson.sector;
+          if (!sameRole && !sameSector) continue;
+
+          const level = sameRole ? 'critical' : 'warning';
+          const reason = sameRole ? 'mesma gestão e cargo' : 'mesma gestão e setor';
+          firstPerson.periods.forEach(firstPeriod => {
+            if (firstPeriod.invalid) return;
+            secondPerson.periods.forEach(secondPeriod => {
+              if (secondPeriod.invalid || firstPeriod.start > secondPeriod.end || firstPeriod.end < secondPeriod.start) return;
+              firstPeriod.conflicts.push({ id: secondPerson.id, employeeId: secondPerson.employeeId, name: secondPerson.name, level, reason });
+              secondPeriod.conflicts.push({ id: firstPerson.id, employeeId: firstPerson.employeeId, name: firstPerson.name, level, reason });
+              setConflictLevel(firstPeriod, level);
+              setConflictLevel(secondPeriod, level);
+            });
+          });
+        }
+      }
+    }
+
+    function persistRegistries(mutation = null) {
+      if (sharedDataMode) {
+        if (mutation) queueSharedMutation(mutation);
+        return;
+      }
+      if (localPreviewOrigin) try { localStorage.setItem('gestao-ferias-registries', JSON.stringify(registries)); } catch (_) {}
+    }
+
+    function applySharedStatePayload(payload, refresh = true) {
+      if (!payload || !Array.isArray(payload.collaborators)) return;
+      ganttData.people = payload.collaborators;
+      sharedDataRevision = Number(payload.revision || sharedDataRevision || 0);
+      if (Array.isArray(payload.registries?.managers)) registries.managers.splice(0, registries.managers.length, ...payload.registries.managers);
+      if (Array.isArray(payload.registries?.sectors)) registries.sectors.splice(0, registries.sectors.length, ...payload.registries.sectors);
+      canonicalizeCollaboratorCatalogValues();
+      recalculatePlanningConflicts();
+      if (refresh) refreshCatalogViews();
+    }
+
+    let pendingSharedSaves = 0;
+    function queueSharedMutation(mutation) {
+      if (!sharedDataMode) return Promise.resolve();
+      pendingSharedSaves++;
+      sharedSaveQueue = sharedSaveQueue.then(async () => {
+        const response = await window.VacationBackend.requestState({ ...mutation, expectedRevision: sharedDataRevision });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.message || 'Não foi possível salvar a alteração.');
+        applySharedStatePayload(payload);
+        showToast('Alteração salva no Supabase e compartilhada.');
+      }).catch(async error => {
+        showToast('Alteração não confirmada: ' + error.message);
+        try {
+          const response = await window.VacationBackend.requestState();
+          if (response.ok) applySharedStatePayload(await response.json());
+          else window.VacationBackend.showError(new Error('Não foi possível recuperar os dados. Recarregue a página.'));
+        } catch (_) { window.VacationBackend.showError(new Error('Conexão interrompida. Recarregue antes de continuar.')); }
+      }).finally(() => { pendingSharedSaves--; });
+      return sharedSaveQueue;
+    }
+
+    async function refreshSharedDataIfChanged() {
+      if (!sharedDataMode || document.hidden || pendingSharedSaves) return;
+      const revisionAtStart = sharedDataRevision;
+      try {
+        const response = await window.VacationBackend.requestState();
+        if (!response.ok || pendingSharedSaves || revisionAtStart !== sharedDataRevision) return;
+        const payload = await response.json();
+        if (Number(payload.revision) > sharedDataRevision) {
+          applySharedStatePayload(payload);
+          showToast('Atualizado com alterações de outro usuário.');
+        }
+      } catch (_) { document.querySelector('#environment-note').textContent = 'Sem sincronização · confira sua conexão'; }
+    }
+
+    function buildBackupPayload() {
+      return {
+        schemaVersion: 1,
+        application: 'Gestão de Férias',
+        exportedAt: new Date().toISOString(),
+        collaborators: ganttData.people,
+        registries: {
+          managers: registries.managers,
+          sectors: registries.sectors
+        }
+      };
+    }
+
+    function updateBackupStatus(message, error = false) {
+      backupStatus.classList.toggle('error', error);
+      backupStatus.innerHTML = error ? escapeHtml(message) : message;
+    }
+
+    function refreshBackupStatus() {
+      let lastBackup = '';
+      let hasSafetySnapshot = false;
+      try {
+        lastBackup = localStorage.getItem('gestao-ferias-last-backup') || '';
+        hasSafetySnapshot = Boolean(localStorage.getItem('gestao-ferias-pre-restore-backup'));
+      } catch (_) {}
+      recoverSafetySnapshot.hidden = true;
+      if (lastBackup) {
+        const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(lastBackup));
+        updateBackupStatus(`<strong>Último backup baixado em ${escapeHtml(date)}.</strong> A cópia inclui ${ganttData.people.length} colaboradores, períodos de férias, ${registries.managers.length} gestores e ${registries.sectors.length} setores.`);
+      } else {
+        updateBackupStatus(`O backup inclui ${ganttData.people.length} colaboradores, períodos de férias, ${registries.managers.length} gestores e ${registries.sectors.length} setores cadastrados.`);
+      }
+    }
+
+    function downloadBackup() {
+      const payload = buildBackupPayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
+      link.href = url;
+      link.download = `gestao-ferias-backup_${timestamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      try { localStorage.setItem('gestao-ferias-last-backup', payload.exportedAt); } catch (_) {}
+      refreshBackupStatus();
+      showToast('Backup completo baixado para o computador.');
+    }
+
+    function validateBackupPayload(payload) {
+      if (!payload || typeof payload !== 'object') throw new Error('O arquivo não contém um backup válido.');
+      if (!Array.isArray(payload.collaborators)) throw new Error('O backup não possui uma lista válida de colaboradores.');
+      const validCollaborators = payload.collaborators.every(person => person && typeof person.employeeId === 'string' && typeof person.name === 'string' && typeof person.role === 'string' && typeof person.management === 'string' && typeof person.sector === 'string' && Array.isArray(person.periods));
+      if (!validCollaborators) throw new Error('Existem colaboradores incompletos ou incompatíveis no backup.');
+      if (payload.registries && (!Array.isArray(payload.registries.managers) || !Array.isArray(payload.registries.sectors))) throw new Error('Os cadastros de gestores e setores estão inválidos.');
+      return payload;
+    }
+
+    async function prepareBackupRestore(file) {
+      try {
+        const payload = validateBackupPayload(JSON.parse(await file.text()));
+        openRestoreConfirmation(payload, 'O arquivo');
+      } catch (error) {
+        pendingRestoreBackup = null;
+        updateBackupStatus(error.message || 'Não foi possível ler o arquivo de backup.', true);
+        showToast('O arquivo selecionado não é um backup válido.');
+      } finally {
+        restoreBackupFile.value = '';
+      }
+    }
+
+    function openRestoreConfirmation(payload, sourceLabel) {
+      pendingRestoreBackup = payload;
+      const managerCount = Array.isArray(payload.registries?.managers) ? payload.registries.managers.length : deriveRegistryEntries(payload.collaborators.map(person => person.management), 'manager').length;
+      const sectorCount = Array.isArray(payload.registries?.sectors) ? payload.registries.sectors.length : deriveRegistryEntries(payload.collaborators.map(person => person.sector), 'sector').length;
+      restoreBackupSummary.textContent = `${sourceLabel} possui ${payload.collaborators.length} colaboradores, ${managerCount} gestores e ${sectorCount} setores. Os dados atuais serão substituídos e uma cópia de segurança automática será preservada neste navegador.`;
+      restoreModal.classList.add('open');
+    }
+
+    function prepareSafetySnapshotRestore() {
+      try {
+        const payload = validateBackupPayload(JSON.parse(localStorage.getItem('gestao-ferias-pre-restore-backup') || 'null'));
+        openRestoreConfirmation(payload, 'A versão anterior');
+      } catch (_) {
+        recoverSafetySnapshot.hidden = true;
+        updateBackupStatus('A versão anterior não está mais disponível neste navegador.', true);
+      }
+    }
+
+    function closeRestoreModal() {
+      pendingRestoreBackup = null;
+      restoreModal.classList.remove('open');
+    }
+
+    async function confirmBackupRestore() {
+      closeRestoreModal();
+      showToast('A migração inicial é realizada separadamente pelo administrador.');
+    }
+
+    function populateRegistrySelect(select, entries, placeholder, type) {
+      const selectedKey = registryKey(select.value, type);
+      select.innerHTML = `<option value="">${placeholder}</option>${entries.map(entry => `<option value="${escapeHtml(entry.name)}">${escapeHtml(entry.name)}</option>`).join('')}`;
+      const match = entries.find(entry => entry.key === selectedKey);
+      if (match) select.value = match.name;
+    }
+
+    function refreshRegistrySelectors() {
+      populateRegistrySelect(manager, registries.managers, 'Todos os gestores', 'manager');
+      populateRegistrySelect(collaboratorsManagement, registries.managers, 'Todos os gestores', 'manager');
+      populateRegistrySelect(collaboratorsSector, registries.sectors, 'Todos os setores', 'sector');
+      populateRegistrySelect(calendarManagement, registries.managers, 'Todas as gestões', 'manager');
+      populateRegistrySelect(ganttManagement, registries.managers, 'Todas as gestões', 'manager');
+      populateRegistrySelect(document.querySelector('#collaborator-management'), registries.managers, 'Selecione...', 'manager');
+      populateRegistrySelect(document.querySelector('#collaborator-sector'), registries.sectors, 'Selecione...', 'sector');
+    }
+
+    function registryUsageCount(type, key) {
+      const property = type === 'manager' ? 'management' : 'sector';
+      return ganttData.people.filter(person => registryKey(person[property], type) === key).length;
+    }
+
+    function renderRegistry(type) {
+      const entries = registryCollection(type);
+      const list = type === 'manager' ? managerRegistryList : sectorRegistryList;
+      const noun = type === 'manager' ? 'gestor' : 'setor';
+      list.innerHTML = entries.map(entry => {
+        const count = registryUsageCount(type, entry.key);
+        return `<div class="registry-entry"><div><strong>${escapeHtml(entry.name)}</strong><small>${count} colaborador${count === 1 ? '' : 'es'} vinculado${count === 1 ? '' : 's'}</small></div><div class="registry-actions"><button class="registry-action" type="button" data-registry-edit="${type}" data-registry-key="${escapeHtml(entry.key)}">Editar</button><button class="registry-action delete" type="button" data-registry-delete="${type}" data-registry-key="${escapeHtml(entry.key)}">Excluir</button></div></div>`;
+      }).join('') || `<div class="registry-empty">Nenhum ${noun} cadastrado.</div>`;
+    }
+
+    function renderRegistries() {
+      renderRegistry('manager');
+      renderRegistry('sector');
+    }
+
+    function resetRegistryForm(type) {
+      const form = type === 'manager' ? managerRegistryForm : sectorRegistryForm;
+      const input = type === 'manager' ? managerRegistryInput : sectorRegistryInput;
+      form.dataset.editingKey = '';
+      form.querySelector('.primary-button').textContent = '＋ Adicionar';
+      form.querySelector('[data-registry-cancel]').hidden = true;
+      input.value = '';
+    }
+
+    function saveRegistryEntry(type) {
+      const form = type === 'manager' ? managerRegistryForm : sectorRegistryForm;
+      const input = type === 'manager' ? managerRegistryInput : sectorRegistryInput;
+      const entries = registryCollection(type);
+      const name = registryDisplayName(input.value, type);
+      const key = registryKey(name, type);
+      const editingKey = form.dataset.editingKey || '';
+      if (!key) return;
+      if (entries.some(entry => entry.key === key && entry.key !== editingKey)) {
+        showToast(`${type === 'manager' ? 'Gestor' : 'Setor'} já cadastrado.`);
+        input.focus();
+        return;
+      }
+
+      if (editingKey) {
+        const entry = entries.find(item => item.key === editingKey);
+        if (entry) {
+          entry.key = key;
+          entry.name = name;
+          const property = type === 'manager' ? 'management' : 'sector';
+          ganttData.people.forEach(person => {
+            if (registryKey(person[property], type) === editingKey) person[property] = name;
+          });
+          persistCollaborators();
+        }
+      } else {
+        entries.push({ key, name });
+      }
+      entries.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+      persistRegistries({ action: 'saveRegistry', registryType: type, oldKey: editingKey || undefined, name });
+      resetRegistryForm(type);
+      refreshCatalogViews();
+      showToast('Salvando alteração…');
+    }
+
+    function editRegistryEntry(type, key) {
+      const entry = registryCollection(type).find(item => item.key === key);
+      if (!entry) return;
+      const form = type === 'manager' ? managerRegistryForm : sectorRegistryForm;
+      const input = type === 'manager' ? managerRegistryInput : sectorRegistryInput;
+      form.dataset.editingKey = key;
+      form.querySelector('.primary-button').textContent = 'Salvar alteração';
+      form.querySelector('[data-registry-cancel]').hidden = false;
+      input.value = entry.name;
+      input.focus();
+    }
+
+    function deleteRegistryEntry(type, key) {
+      const entries = registryCollection(type);
+      const entry = entries.find(item => item.key === key);
+      if (!entry) return;
+      const usage = registryUsageCount(type, key);
+      if (usage) {
+        showToast(`Não é possível excluir ${entry.name}: ${usage} colaborador${usage === 1 ? ' está' : 'es estão'} vinculado${usage === 1 ? '' : 's'}.`);
+        return;
+      }
+      entries.splice(entries.indexOf(entry), 1);
+      persistRegistries({ action: 'deleteRegistry', registryType: type, key });
+      resetRegistryForm(type);
+      refreshCatalogViews();
+      showToast('Salvando alteração…');
+    }
+
+    function refreshCatalogViews() {
+      refreshRegistrySelectors();
+      collaboratorsInitialized = false;
+      refreshCollaboratorRoleOptions();
+      invalidatePlanningViews();
+      renderRegistries();
+      renderCollaborators();
+      renderManagementReports();
+      renderAnnualChart();
+      refreshBackupStatus();
+    }
+
+    function initializeCalendar() {
+      if (calendarInitialized) return;
+      populateRegistrySelect(calendarManagement, registries.managers, 'Todas as gestões', 'manager');
+      calendarInitialized = true;
+    }
+
+    function ensureCalendarYearOption(year) {
+      if (![...calendarYear.options].some(option => Number(option.value) === year)) {
+        calendarYear.insertAdjacentHTML('beforeend', `<option value="${year}">${year}</option>`);
+      }
+      calendarYear.value = String(year);
+    }
+
+    function isoFromUtcDate(date) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    function calendarPeopleForDate(iso) {
+      const activePeople = [];
+      ganttData.people.forEach(person => {
+        if (calendarManagement.value && person.management !== calendarManagement.value) return;
+        const period = person.periods.find(item => !item.invalid && item.start <= iso && item.end >= iso);
+        if (period) activePeople.push({ person, period });
+      });
+      activePeople.sort((a, b) => {
+        const conflictDifference = Number(b.period.conflictLevel !== 'none') - Number(a.period.conflictLevel !== 'none');
+        return conflictDifference || a.person.name.localeCompare(b.person.name, 'pt-BR');
+      });
+      return activePeople;
+    }
+
+    function setCalendarView(view) {
+      if (!['day', 'week', 'month'].includes(view)) return;
+      calendarView = view;
+      calendarViewButtons.forEach(button => {
+        const active = button.dataset.calendarView === view;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      renderCalendar();
+    }
+
+    function shiftCalendarContext(delta) {
+      const year = calendarFocusDate.getUTCFullYear();
+      const month = calendarFocusDate.getUTCMonth();
+      const day = calendarFocusDate.getUTCDate();
+      if (calendarView === 'month') {
+        const targetMonthStart = new Date(Date.UTC(year, month + delta, 1));
+        const lastDay = new Date(Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth() + 1, 0)).getUTCDate();
+        calendarFocusDate = new Date(Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth(), Math.min(day, lastDay)));
+      } else {
+        const days = calendarView === 'week' ? delta * 7 : delta;
+        calendarFocusDate = new Date(calendarFocusDate.getTime() + days * 86400000);
+      }
+      renderCalendar();
+    }
+
+    function updateCalendarContextCopy() {
+      const copy = {
+        day: ['Programação diária', 'Detalhamento dos colaboradores em férias na data selecionada.'],
+        week: ['Programação semanal', 'Compare a concentração de férias ao longo dos sete dias.'],
+        month: ['Programação mensal', 'As cores identificam as gestões com férias no período.']
+      }[calendarView];
+      calendarContextHeading.textContent = copy[0];
+      calendarContextDescription.textContent = copy[1];
+    }
+
+    function renderCalendarMonth(todayIso) {
+      const firstDay = new Date(Date.UTC(calendarDisplayYear, calendarMonth, 1));
+      const gridStart = new Date(Date.UTC(calendarDisplayYear, calendarMonth, 1 - firstDay.getUTCDay()));
+      const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(firstDay);
+      calendarTitle.textContent = monthLabel.charAt(0).toLocaleUpperCase('pt-BR') + monthLabel.slice(1);
+      const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => `<div class="weekday">${day}</div>`);
+      const days = [];
+      for (let index = 0; index < 42; index += 1) {
+        const cellDate = new Date(gridStart.getTime() + index * 86400000);
+        const iso = isoFromUtcDate(cellDate);
+        const activePeople = calendarPeopleForDate(iso);
+        const visibleEvents = activePeople.slice(0, 2).map(({ person, period }) => {
+          const firstName = formatLabel(person.name).split(' ')[0];
+          const title = `${formatLabel(person.name)} · ${formatManagerName(person.management)} · Período ${period.cycle}`;
+          return `<span class="event ${calendarEventClass(person.management)}" title="${escapeHtml(title)}">${escapeHtml(firstName)} · P${period.cycle}</span>`;
+        });
+        if (activePeople.length > 2) visibleEvents.push(`<span class="event more">+${activePeople.length - 2} em férias</span>`);
+        const inCurrentMonth = cellDate.getUTCMonth() === calendarMonth;
+        const classNames = ['day', inCurrentMonth ? '' : 'muted', iso === todayIso ? 'today' : ''].filter(Boolean).join(' ');
+        const accessibleDate = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(cellDate);
+        days.push(`<div class="${classNames}" data-calendar-date="${iso}" role="button" tabindex="0" aria-label="${accessibleDate}${activePeople.length ? `, ${activePeople.length} colaborador${activePeople.length === 1 ? '' : 'es'} em férias` : ''}"><span class="day-number">${cellDate.getUTCDate()}</span>${visibleEvents.join('')}</div>`);
+      }
+      calendarGrid.className = 'month-grid calendar-context-grid';
+      calendarGrid.innerHTML = [...weekdays, ...days].join('');
+    }
+
+    function renderCalendarWeek(todayIso) {
+      const weekStart = new Date(calendarFocusDate.getTime() - calendarFocusDate.getUTCDay() * 86400000);
+      const weekEnd = new Date(weekStart.getTime() + 6 * 86400000);
+      const sameMonth = weekStart.getUTCMonth() === weekEnd.getUTCMonth() && weekStart.getUTCFullYear() === weekEnd.getUTCFullYear();
+      const startLabel = new Intl.DateTimeFormat('pt-BR', sameMonth ? { day: 'numeric', timeZone: 'UTC' } : { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(weekStart).replace('.', '');
+      const endLabel = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(weekEnd);
+      calendarTitle.textContent = `${startLabel} – ${endLabel}`;
+      const days = [];
+      for (let index = 0; index < 7; index += 1) {
+        const date = new Date(weekStart.getTime() + index * 86400000);
+        const iso = isoFromUtcDate(date);
+        const activePeople = calendarPeopleForDate(iso);
+        const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' }).format(date).replace('.', '');
+        const events = activePeople.slice(0, 6).map(({ person, period }) => `<div class="week-event ${calendarEventClass(person.management)}" title="${escapeHtml(`${formatLabel(person.name)} · ${formatManagerName(person.management)}`)}"><strong>${escapeHtml(formatLabel(person.name).split(' ')[0])} · P${period.cycle}</strong><small>${escapeHtml(formatLabel(person.role))}</small></div>`);
+        if (activePeople.length > 6) events.push(`<div class="week-more">+${activePeople.length - 6} colaboradores</div>`);
+        days.push(`<div class="week-day ${iso === todayIso ? 'today' : ''}" data-calendar-date="${iso}" role="button" tabindex="0"><div class="week-day-header"><div><span>${escapeHtml(weekday)}</span><strong>${date.getUTCDate()}</strong></div><b class="week-day-count" title="Colaboradores em férias">${activePeople.length}</b></div><div class="week-events">${events.join('') || '<div class="week-more">Sem férias</div>'}</div></div>`);
+      }
+      calendarGrid.className = 'calendar-context-grid week-grid';
+      calendarGrid.innerHTML = days.join('');
+    }
+
+    function renderCalendarDay() {
+      const iso = isoFromUtcDate(calendarFocusDate);
+      const activePeople = calendarPeopleForDate(iso);
+      const fullLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(calendarFocusDate);
+      calendarTitle.textContent = fullLabel.charAt(0).toLocaleUpperCase('pt-BR') + fullLabel.slice(1);
+      const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' }).format(calendarFocusDate);
+      const monthYear = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(calendarFocusDate);
+      const events = activePeople.map(({ person, period }) => `<div class="day-agenda-event"><span class="day-agenda-avatar">${initials(person.name)}</span><div><strong>${escapeHtml(formatLabel(person.name))}</strong><small>${escapeHtml(formatLabel(person.role))} · ${escapeHtml(formatManagerName(person.management))} · ${escapeHtml(formatLabel(person.sector))}</small></div><span class="day-agenda-period" title="${escapeHtml(`${formatDate(period.start)} a ${formatDate(period.end)}`)}">P${period.cycle}</span></div>`).join('');
+      calendarGrid.className = 'calendar-context-grid day-agenda';
+      calendarGrid.innerHTML = `<aside class="day-agenda-summary"><span>${escapeHtml(weekday)}</span><strong>${calendarFocusDate.getUTCDate()}</strong><small>${escapeHtml(monthYear)}<br><b>${activePeople.length}</b> colaborador${activePeople.length === 1 ? '' : 'es'} em férias</small></aside><div class="day-agenda-list">${events || '<div class="calendar-empty">Nenhum colaborador em férias nesta data.</div>'}</div>`;
+    }
+
+    function renderCalendar() {
+      initializeCalendar();
+      calendarDisplayYear = calendarFocusDate.getUTCFullYear();
+      calendarMonth = calendarFocusDate.getUTCMonth();
+      ensureCalendarYearOption(calendarDisplayYear);
+      updateCalendarContextCopy();
+      calendarViewButtons.forEach(button => {
+        const active = button.dataset.calendarView === calendarView;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      const today = new Date();
+      const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      if (calendarView === 'day') renderCalendarDay();
+      else if (calendarView === 'week') renderCalendarWeek(todayIso);
+      else renderCalendarMonth(todayIso);
+    }
+
+    function calendarEventClass(management) {
+      const palette = ['', 'blue', 'amber', 'g3', 'g4', 'g5', 'g6'];
+      const hash = [...String(management)].reduce((total, character) => total + character.charCodeAt(0), 0);
+      return palette[hash % palette.length];
+    }
+
+    function renderAnnualChart() {
+      const year = Number(overviewYear.value);
+      const selectedManager = manager.value;
+      const monthStats = monthNames.map((month, index) => {
+        const monthStart = `${year}-${String(index + 1).padStart(2, '0')}-01`;
+        const lastDay = new Date(Date.UTC(year, index + 1, 0)).getUTCDate();
+        const monthEnd = `${year}-${String(index + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        const byManager = {};
+
+        ganttData.people.forEach(person => {
+          const managerName = canonicalRegistryValue(person.management, 'manager');
+          if (selectedManager && managerName !== selectedManager) return;
+          const isOnVacation = person.periods.some(period => !period.invalid && period.start <= monthEnd && period.end >= monthStart);
+          if (isOnVacation) byManager[managerName] = (byManager[managerName] || 0) + 1;
+        });
+
+        const managers = Object.entries(byManager).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'));
+        return { month, index, managers, total: managers.reduce((sum, [, count]) => sum + count, 0) };
+      });
+
+      const maxTotal = Math.max(1, ...monthStats.map(item => item.total));
+      annualChart.innerHTML = monthStats.map(item => {
+        const height = item.total ? Math.max(8, (item.total / maxTotal) * 100) : 0;
+        const fullMonth = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, item.index, 1)));
+        const managerRows = item.managers.length
+          ? item.managers.map(([name, count]) => `<div class="tooltip-manager-row"><span>${escapeHtml(name)}</span><b>${count}</b></div>`).join('')
+          : '<div class="tooltip-manager-row"><span>Sem férias programadas</span><b>0</b></div>';
+        const details = item.managers.map(([name, count]) => `${name}: ${count}`).join(', ') || 'sem férias programadas';
+        const edgeClass = item.index < 3 ? 'tooltip-left' : item.index > 8 ? 'tooltip-right' : '';
+        return `<div class="bar-column ${edgeClass}" tabindex="0" aria-label="${escapeHtml(`${fullMonth}: ${item.total} colaboradores em férias; ${details}`)}">
+          <span class="bar-value">${item.total}</span>
+          <div class="bar-track"><div style="height:${height.toFixed(1)}%"></div></div>
+          <small>${item.month}</small>
+          <div class="chart-tooltip" role="tooltip"><strong>${escapeHtml(fullMonth.charAt(0).toLocaleUpperCase('pt-BR') + fullMonth.slice(1))}</strong><small>${item.total} colaborador${item.total === 1 ? '' : 'es'} em férias · quantidade por gestor</small><div class="tooltip-manager-list">${managerRows}</div></div>
+        </div>`;
+      }).join('');
+    }
+
+    function managementReportData(year = Number(overviewYear.value)) {
+      return registries.managers.map((entry, index) => {
+        const people = ganttData.people.filter(person => registryKey(person.management, 'manager') === entry.key);
+        const planned = people.filter(person => person.periods.some(period => !period.invalid && periodTouchesYear(period, year))).length;
+        const coverage = people.length ? Math.round((planned / people.length) * 100) : 0;
+        const sectors = [...new Set(people.map(person => canonicalRegistryValue(person.sector, 'sector')))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        return { ...entry, index, people: people.length, planned, coverage, sectors };
+      });
+    }
+
+    function renderManagementReports() {
+      const items = [];
+      for (const person of ganttData.people) for (const period of person.periods) {
+        if (period.invalid || period.conflictLevel !== 'none') {
+          const title = period.invalid ? 'Período com datas inconsistentes' : 'Sobreposição de férias';
+          items.push('<article class="panel alert-item"><span class="alert-symbol">!</span><div><strong>' + title + '</strong><small>' + escapeHtml(formatLabel(person.name) + ' · ' + period.cycle + 'º período · ' + person.management) + '</small></div><button data-open-modal>Revisar programação</button></article>');
+        }
+      }
+      document.querySelector('.alert-list').innerHTML = items.join('') || '<article class="panel registry-empty">Nenhuma divergência identificada.</article>';
+
+      const year = Number(overviewYear.value);
+      const data = managementReportData(year);
+      const palette = ['#4f46e5', '#6366f1', '#7c72ed', '#06b6d4', '#22a7b8', '#5b8def', '#8b7cf6'];
+      managementList.innerHTML = data.slice().sort((a, b) => b.people - a.people || a.name.localeCompare(b.name, 'pt-BR')).slice(0, 5).map(item => `<div class="management-row"><div><strong>${escapeHtml(item.name)}</strong><small>${item.planned} de ${item.people} planejados</small></div><span>${item.coverage}%</span><div class="progress"><i style="width:${item.coverage}%;background:${palette[item.index % palette.length]}"></i></div></div>`).join('') || '<div class="registry-empty">Nenhum gestor cadastrado.</div>';
+      teamsGrid.innerHTML = data.map(item => {
+        const sectorSummary = item.sectors.length ? item.sectors.slice(0, 4).join(', ') + (item.sectors.length > 4 ? ` e mais ${item.sectors.length - 4}` : '') : 'Nenhum setor vinculado';
+        return `<article class="panel team-card"><h3>Gestão ${escapeHtml(item.name)}</h3><p>${escapeHtml(sectorSummary)}</p><div class="progress"><i style="width:${item.coverage}%;background:${palette[item.index % palette.length]}"></i></div><div class="team-stats"><div><strong>${item.people}</strong><small>colaboradores</small></div><div><strong>${item.planned}</strong><small>planejados</small></div><div><strong>${item.coverage}%</strong><small>cobertura</small></div></div></article>`;
+      }).join('') || '<article class="panel registry-empty">Cadastre um gestor em Configurações para iniciar o relatório.</article>';
+
+      const total = ganttData.people.length;
+      const active = ganttData.people.filter(person => person.status === 'Ativo').length;
+      const away = ganttData.people.filter(person => person.status === 'Afastado').length;
+      const planned = ganttData.people.filter(person => person.periods.some(period => !period.invalid && periodTouchesYear(period, year))).length;
+      const invalid = ganttData.people.flatMap(person => person.periods).filter(period => period.invalid).length;
+      document.querySelector('#overview-management-count').textContent = `${registries.managers.length} ${registries.managers.length === 1 ? 'gestão' : 'gestões'}`;
+      document.querySelector('#overview-collaborators-count').textContent = total;
+      document.querySelector('#overview-collaborators-summary').textContent = `${active} ativos · ${away} afastados`;
+      document.querySelector('#overview-planned-count').textContent = planned;
+      document.querySelector('#overview-planned-summary').textContent = `${total ? ((planned / total) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : 0}% da base consolidada`;
+      document.querySelector('#overview-unplanned-count').textContent = Math.max(0, total - planned);
+      document.querySelector('#overview-unplanned-summary').textContent = `Sem período válido em ${year}`;
+      document.querySelector('#overview-invalid-count').textContent = invalid;
+    }
+
+    function initializeCollaborators() {
+      if (collaboratorsInitialized) return;
+      const roles = [...new Set(ganttData.people.map(person => person.role))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      populateRegistrySelect(collaboratorsManagement, registries.managers, 'Todos os gestores', 'manager');
+      populateRegistrySelect(collaboratorsSector, registries.sectors, 'Todos os setores', 'sector');
+      collaboratorsRole.insertAdjacentHTML('beforeend', roles.map(role => `<option value="${escapeHtml(role)}">${formatLabel(role)}</option>`).join(''));
+      collaboratorsInitialized = true;
+    }
+
+    function refreshCollaboratorRoleOptions() {
+      const selectedRole = collaboratorsRole.value;
+      const selectedManagement = collaboratorsManagement.value;
+      const selectedSector = collaboratorsSector.value;
+      collaboratorsRole.innerHTML = '<option value="">Todos os cargos</option>';
+      collaboratorsInitialized = false;
+      initializeCollaborators();
+      if ([...collaboratorsRole.options].some(option => option.value === selectedRole)) collaboratorsRole.value = selectedRole;
+      if ([...collaboratorsManagement.options].some(option => option.value === selectedManagement)) collaboratorsManagement.value = selectedManagement;
+      if ([...collaboratorsSector.options].some(option => option.value === selectedSector)) collaboratorsSector.value = selectedSector;
+    }
+
+    function renderCollaborators() {
+      initializeCollaborators();
+      const query = normalizeText(search.value);
+      const filtered = ganttData.people.filter(person => {
+        const searchable = normalizeText(`${person.name} ${person.employeeId} ${person.role} ${person.sector} ${person.management} ${person.status}`);
+        return (!query || searchable.includes(query)) && (!collaboratorsManagement.value || person.management === collaboratorsManagement.value) && (!collaboratorsSector.value || person.sector === collaboratorsSector.value) && (!collaboratorsRole.value || person.role === collaboratorsRole.value) && (!collaboratorsStatus.value || person.status === collaboratorsStatus.value);
+      });
+
+      collaboratorsBody.innerHTML = filtered.map(person => {
+        const statusClass = person.status === 'Ativo' ? 'approved' : person.status === 'A REVISAR' ? 'review' : '';
+        const statusLabel = person.status === 'A REVISAR' ? 'A revisar' : person.status;
+        return `<tr>
+          <td><div class="person"><span>${initials(person.name)}</span><div><strong>${escapeHtml(formatLabel(person.name))}</strong></div></div></td>
+          <td>${escapeHtml(formatLabel(person.role))}</td>
+          <td>${escapeHtml(formatManagerName(person.management))}</td>
+          <td>${escapeHtml(formatLabel(person.sector))}</td>
+          <td>${formatCollaboratorPeriod(person, 1)}</td>
+          <td>${formatCollaboratorPeriod(person, 2)}</td>
+          <td><span class="status ${statusClass}">${escapeHtml(statusLabel)}</span></td>
+          <td><div class="row-actions"><button class="crud-action edit" type="button" data-collaborator-edit="${escapeHtml(person.id)}" aria-label="Editar ${escapeHtml(formatLabel(person.name))}" title="Editar"><span aria-hidden="true">&#9998;</span></button><button class="crud-action delete" type="button" data-collaborator-delete="${escapeHtml(person.id)}" aria-label="Excluir ${escapeHtml(formatLabel(person.name))}" title="Excluir"><span aria-hidden="true">&#x1F5D1;&#xFE0E;</span></button></div></td>
+        </tr>`;
+      }).join('') || '<tr><td class="empty-state" colspan="8">Nenhum colaborador encontrado com estes filtros.</td></tr>';
+
+      const activeCount = filtered.filter(person => person.status === 'Ativo').length;
+      const awayCount = filtered.filter(person => person.status === 'Afastado').length;
+      const reviewCount = filtered.filter(person => person.status === 'A REVISAR').length;
+      collaboratorsCount.textContent = filtered.length === ganttData.people.length ? `${filtered.length} colaboradores` : `${filtered.length} de ${ganttData.people.length} colaboradores`;
+      collaboratorsSummary.textContent = `${activeCount} ativos · ${awayCount} afastados · ${reviewCount} ${reviewCount === 1 ? 'cadastro' : 'cadastros'} para revisar`;
+    }
+
+    function persistCollaborators(mutation = null) {
+      recalculatePlanningConflicts();
+      if (sharedDataMode) {
+        if (mutation) queueSharedMutation(mutation);
+      } else if (localPreviewOrigin) {
+        try { localStorage.setItem('gestao-ferias-collaborators', JSON.stringify(ganttData.people)); } catch (_) {}
+      }
+      ganttData.summary.collaborators = ganttData.people.length;
+      refreshBackupStatus();
+    }
+
+    function invalidatePlanningViews() {
+      ganttRole.innerHTML = '<option value="">Todos os cargos</option>';
+      ganttInitialized = false;
+      calendarInitialized = false;
+      refreshRegistrySelectors();
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    function activeVacationCollaborators(query = '') {
+      const normalizedQuery = normalizeText(query);
+      return ganttData.people
+        .filter(person => person.status === 'Ativo')
+        .filter(person => !normalizedQuery || normalizeText(`${person.name} ${person.role} ${person.sector} ${person.management}`).includes(normalizedQuery))
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+        .slice(0, 8);
+    }
+
+    function closeVacationCollaboratorOptions() {
+      vacationCollaboratorOptions.hidden = true;
+      vacationCollaboratorSearch.setAttribute('aria-expanded', 'false');
+      collaboratorSearchActiveIndex = -1;
+    }
+
+    function renderVacationCollaboratorOptions(query = '') {
+      const trimmedQuery = String(query).trim();
+      if (!trimmedQuery) {
+        vacationCollaboratorOptions.innerHTML = '';
+        closeVacationCollaboratorOptions();
+        return;
+      }
+      const people = activeVacationCollaborators(trimmedQuery);
+      vacationCollaboratorOptions.innerHTML = people.length
+        ? people.map(person => {
+            const id = String(person.id || person.employeeId);
+            return `<button class="collaborator-option" type="button" role="option" data-collaborator-option="${escapeHtml(id)}"><strong>${escapeHtml(formatLabel(person.name))}</strong><small>${escapeHtml(formatLabel(person.role))} · ${escapeHtml(formatLabel(person.sector))} · ${escapeHtml(formatManagerName(person.management))}</small></button>`;
+          }).join('')
+        : '<div class="collaborator-options-empty">Nenhum colaborador encontrado.</div>';
+      vacationCollaboratorOptions.hidden = false;
+      vacationCollaboratorSearch.setAttribute('aria-expanded', 'true');
+      collaboratorSearchActiveIndex = -1;
+    }
+
+    function selectVacationCollaborator(person) {
+      if (!person) return;
+      vacationCollaborator.value = String(person.id || person.employeeId);
+      vacationCollaboratorSearch.value = formatLabel(person.name);
+      vacationCollaboratorSearch.setCustomValidity('');
+      closeVacationCollaboratorOptions();
+    }
+
+    function moveVacationCollaboratorHighlight(direction) {
+      const options = [...vacationCollaboratorOptions.querySelectorAll('.collaborator-option')];
+      if (!options.length) return;
+      collaboratorSearchActiveIndex = (collaboratorSearchActiveIndex + direction + options.length) % options.length;
+      options.forEach((option, index) => option.classList.toggle('active', index === collaboratorSearchActiveIndex));
+      options[collaboratorSearchActiveIndex].scrollIntoView({ block: 'nearest' });
+    }
+
+    function openCollaboratorModal(person = null) {
+      collaboratorForm.reset();
+      document.querySelector('#collaborator-original-id').value = person?.id || '';
+      document.querySelector('#collaborator-id').value = person?.employeeId || '';
+      document.querySelector('#collaborator-name').value = person ? formatLabel(person.name) : '';
+      document.querySelector('#collaborator-role').value = person ? formatLabel(person.role) : '';
+      document.querySelector('#collaborator-management').value = person ? canonicalRegistryValue(person.management, 'manager') : '';
+      document.querySelector('#collaborator-sector').value = person ? canonicalRegistryValue(person.sector, 'sector') : '';
+      document.querySelector('#collaborator-admission').value = person?.admission || '';
+      document.querySelector('#collaborator-status').value = person?.status || 'Ativo';
+      document.querySelector('#collaborator-id').setCustomValidity('');
+      collaboratorModalTitle.textContent = person ? 'Editar colaborador' : 'Novo colaborador';
+      collaboratorModal.classList.add('open');
+      setTimeout(() => document.querySelector(person ? '#collaborator-name' : '#collaborator-id').focus(), 50);
+    }
+
+    function openVacationModal() {
+      const form = document.querySelector('#vacation-form');
+      form.reset();
+      vacationCollaborator.value = '';
+      vacationCollaboratorSearch.setCustomValidity('');
+      closeVacationCollaboratorOptions();
+      modal.classList.add('open');
+      setTimeout(() => vacationCollaboratorSearch.focus(), 50);
+    }
+
+    function closeCollaboratorModal() {
+      collaboratorModal.classList.remove('open');
+    }
+
+    function requestDeleteCollaborator(id) {
+      const person = ganttData.people.find(item => item.id === id);
+      if (!person) return;
+      pendingDeleteId = id;
+      deleteCollaboratorName.textContent = formatLabel(person.name);
+      deleteModal.classList.add('open');
+    }
+
+    function closeDeleteModal() {
+      pendingDeleteId = '';
+      deleteModal.classList.remove('open');
+    }
+
+    function formatCollaboratorPeriod(person, cycle) {
+      const period = person.periods.find(item => item.cycle === cycle);
+      if (!period) return '<span class="period-empty">Não planejado</span>';
+      if (period.invalid) return '<span class="status review">Revisar datas</span>';
+      const formatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: '2-digit', timeZone: 'UTC' });
+      const start = formatter.format(new Date(`${period.start}T00:00:00Z`)).replace('.', '');
+      const end = formatter.format(new Date(`${period.end}T00:00:00Z`)).replace('.', '');
+      const title = `${period.days} dias · ${formatDate(period.start)} a ${formatDate(period.end)}`;
+      return `<span title="${escapeHtml(title)}"><strong>${start}</strong> — ${end}</span>`;
+    }
+
+    function formatManagerName(management) {
+      return formatLabel(management).replace(/^Gestão\s+/i, '');
+    }
+
+    function showScreen(name, updateHash = true) {
+      const validName = screens.some(screen => screen.dataset.screen === name) ? name : 'visao';
+      const previousName = document.querySelector('.app-screen.active')?.dataset.screen;
+      if (previousName && previousName !== validName) search.value = '';
+      screens.forEach(screen => screen.classList.toggle('active', screen.dataset.screen === validName));
+      screenLinks.forEach(link => link.classList.toggle('active', link.dataset.screenLink === validName));
+      if (updateHash) history.replaceState(null, '', `#${validName}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const labels = { visao: 'Buscar colaborador ou cargo...', calendario: 'Buscar no calendário...', gantt: 'Buscar no Gantt...', colaboradores: 'Buscar colaborador ou cargo...', equipes: 'Buscar gestão ou setor...', alertas: 'Buscar alerta...', config: 'Buscar configuração...' };
+      search.placeholder = labels[validName] || labels.visao;
+      if (validName === 'gantt') {
+        initializeGantt();
+        renderGantt();
+      } else if (validName === 'calendario') {
+        renderCalendar();
+      } else if (validName === 'colaboradores') {
+        renderCollaborators();
+      } else if (validName === 'visao') {
+        renderManagementReports();
+        renderAnnualChart();
+      } else if (validName === 'equipes') {
+        renderManagementReports();
+      } else if (validName === 'config') {
+        renderRegistries();
+      }
+    }
+
+    function filterRows() {
+      const term = search.value.toLocaleLowerCase('pt-BR');
+      rows.forEach(row => {
+        const managerOk = !manager.value || registryKey(row.dataset.manager, 'manager') === registryKey(manager.value, 'manager');
+        row.hidden = !(managerOk && row.dataset.search.includes(term));
+      });
+    }
+
+    function initializeGantt() {
+      if (ganttInitialized) return;
+      const roles = [...new Set(ganttData.people.map(person => person.role))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      populateRegistrySelect(ganttManagement, registries.managers, 'Todas as gestões', 'manager');
+      ganttRole.insertAdjacentHTML('beforeend', roles.map(value => `<option value="${escapeHtml(value)}">${formatLabel(value)}</option>`).join(''));
+      ganttMonth.innerHTML = monthNamesLong.map((month, index) => `<option value="${index}">${month}</option>`).join('');
+      ganttMonth.value = String(new Date().getMonth());
+      ganttInitialized = true;
+    }
+
+    function setGanttScale(scale) {
+      if (!['month', 'day'].includes(scale)) return;
+      ganttScale = scale;
+      ganttMonth.hidden = scale !== 'day';
+      ganttScaleButtons.forEach(button => {
+        const active = button.dataset.ganttScale === scale;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      renderGantt();
+    }
+
+    function periodTouchesRange(period, rangeStartIso, rangeEndIso) {
+      if (period.invalid) return (period.start >= rangeStartIso && period.start <= rangeEndIso) || (period.end >= rangeStartIso && period.end <= rangeEndIso);
+      return period.start <= rangeEndIso && period.end >= rangeStartIso;
+    }
+
+    function renderGantt() {
+      initializeGantt();
+      const year = Number(ganttYear.value);
+      const query = normalizeText(ganttSearch.value);
+      const selectedMonth = Number(ganttMonth.value || 0);
+      const rangeStart = ganttScale === 'day' ? Date.UTC(year, selectedMonth, 1) : Date.UTC(year, 0, 1);
+      const rangeEndExclusive = ganttScale === 'day' ? Date.UTC(year, selectedMonth + 1, 1) : Date.UTC(year + 1, 0, 1);
+      const rangeDays = Math.round((rangeEndExclusive - rangeStart) / 86400000);
+      const rangeStartIso = new Date(rangeStart).toISOString().slice(0, 10);
+      const rangeEndIso = new Date(rangeEndExclusive - 86400000).toISOString().slice(0, 10);
+      const columnWidth = ganttScale === 'day' ? 42 : 100;
+      const columns = ganttScale === 'day' ? rangeDays : 12;
+      ganttCanvas.style.setProperty('--gantt-columns', columns);
+      ganttCanvas.style.setProperty('--gantt-column-width', `${columnWidth}px`);
+      ganttCanvas.style.setProperty('--gantt-track-width', `${columns * columnWidth}px`);
+      if (ganttScale === 'day') {
+        document.querySelector('#gantt-months').innerHTML = Array.from({ length: rangeDays }, (_, index) => {
+          const date = new Date(rangeStart + index * 86400000);
+          const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' }).format(date).replace('.', '');
+          const weekend = [0, 6].includes(date.getUTCDay()) ? ' weekend' : '';
+          return `<div class="gantt-month gantt-day${weekend}" title="${date.getUTCDate()} de ${monthNamesLong[selectedMonth]} de ${year}"><strong>${date.getUTCDate()}</strong><span>${escapeHtml(weekday)}</span></div>`;
+        }).join('');
+      } else {
+        document.querySelector('#gantt-months').innerHTML = monthNames.map(month => `<div class="gantt-month">${month}</div>`).join('');
+      }
+      const today = new Date();
+      const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+      const todayVisible = todayUtc >= rangeStart && todayUtc < rangeEndExclusive;
+      const todayPosition = ((todayUtc - rangeStart) / 86400000 / rangeDays) * 100;
+      const trackContextStyle = `--today-display:${todayVisible ? 'block' : 'none'};--today-position:${todayPosition.toFixed(3)}%`;
+      const filtered = ganttData.people.filter(person => {
+        const searchable = normalizeText(`${person.name} ${person.role} ${person.sector} ${person.management}`);
+        const relevantPeriods = person.periods.filter(period => periodTouchesRange(period, rangeStartIso, rangeEndIso));
+        const hasConflict = relevantPeriods.some(period => period.conflictLevel !== 'none' || period.invalid);
+        return (!query || searchable.includes(query)) && (!ganttManagement.value || person.management === ganttManagement.value) && (!ganttRole.value || person.role === ganttRole.value) && (!ganttOnlyConflicts.checked || hasConflict);
+      });
+
+      let currentManagement = '';
+      const html = [];
+      filtered.forEach(person => {
+        if (person.management !== currentManagement) {
+          currentManagement = person.management;
+          const groupCount = filtered.filter(item => item.management === currentManagement).length;
+          html.push(`<div class="gantt-group">${formatLabel(currentManagement)} · ${groupCount} colaborador${groupCount === 1 ? '' : 'es'}</div>`);
+        }
+        const relevantPeriods = person.periods.filter(period => periodTouchesRange(period, rangeStartIso, rangeEndIso));
+        const conflictCount = relevantPeriods.filter(period => period.conflictLevel !== 'none' || period.invalid).length;
+        const bars = relevantPeriods.map(period => ganttBar(period, rangeStart, rangeEndExclusive, rangeDays)).join('');
+        html.push(`<div class="gantt-row" data-person-id="${person.id}">
+          <div class="gantt-person"><span class="gantt-person-avatar">${initials(person.name)}</span><div><strong title="${escapeHtml(person.name)}">${escapeHtml(person.name)}</strong><small title="${escapeHtml(person.role)}">${formatLabel(person.role)} · ${formatLabel(person.sector)}</small></div><span class="gantt-person-badge ${conflictCount ? 'conflict' : ''}">${conflictCount ? `${conflictCount} alerta${conflictCount > 1 ? 's' : ''}` : person.status}</span></div>
+          <div class="gantt-track" style="${trackContextStyle}">${bars || `<span class="gantt-empty">Sem período válido neste ${ganttScale === 'day' ? 'mês' : 'ano'}</span>`}</div>
+        </div>`);
+      });
+      document.querySelector('#gantt-body').innerHTML = html.join('') || '<div class="gantt-no-results">Nenhum colaborador encontrado com estes filtros.</div>';
+
+      const visiblePeriods = filtered.flatMap(person => person.periods.filter(period => periodTouchesRange(period, rangeStartIso, rangeEndIso)));
+      document.querySelector('#gantt-total').textContent = filtered.length;
+      document.querySelector('#gantt-planned').textContent = filtered.filter(person => person.periods.some(period => periodTouchesRange(period, rangeStartIso, rangeEndIso))).length;
+      document.querySelector('#gantt-conflicts').textContent = visiblePeriods.filter(period => period.conflictLevel !== 'none' || period.invalid).length;
+      document.querySelector('#gantt-unplanned').textContent = filtered.filter(person => !person.periods.some(period => periodTouchesRange(period, rangeStartIso, rangeEndIso))).length;
+    }
+
+    function ganttBar(period, rangeStart, rangeEndExclusive, rangeDays) {
+      const start = Date.parse(`${period.start}T00:00:00Z`);
+      const end = Date.parse(`${period.end}T00:00:00Z`);
+      const clampedStart = Math.max(start, rangeStart);
+      const clampedEnd = Math.min(end, rangeEndExclusive - 86400000);
+      const left = Math.max(0, ((clampedStart - rangeStart) / 86400000 / rangeDays) * 100);
+      const width = period.invalid ? Math.max(1.2, 100 / rangeDays) : Math.max(.45, (((clampedEnd - clampedStart) / 86400000 + 1) / rangeDays) * 100);
+      const conflicts = period.conflicts.slice(0, 4).map(item => item.name).join(', ');
+      const title = period.invalid ? `Período ${period.cycle}: data final anterior à inicial` : `Período ${period.cycle}: ${formatDate(period.start)} a ${formatDate(period.end)} · ${period.days} dias${conflicts ? ` · Conflito com: ${conflicts}` : ''}`;
+      const level = period.invalid ? 'invalid' : period.conflictLevel;
+      return `<span class="gantt-bar cycle-${period.cycle} ${level}" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">P${period.cycle}</span>`;
+    }
+
+    function periodTouchesYear(period, year) {
+      if (period.invalid) return Number(period.start.slice(0, 4)) === year || Number(period.end.slice(0, 4)) === year;
+      return period.start <= `${year}-12-31` && period.end >= `${year}-01-01`;
+    }
+
+    function formatDate(iso) {
+      return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+    }
+
+    function formatLabel(text) {
+      return String(text)
+        .toLocaleLowerCase('pt-BR')
+        .replace(/(^|[\s(/-])\p{L}/gu, letter => letter.toLocaleUpperCase('pt-BR'))
+        .replace(/\(([AO])\)/g, (_, marker) => `(${marker.toLocaleLowerCase('pt-BR')})`);
+    }
+
+    function normalizeRoleLabel(value) {
+      let role = String(value || '').trim().replace(/\s+/g, ' ');
+      role = role
+        .replace(/\s+(?:X|IX|VIII|VII|VI|V|IV|III|II|I|\d+)\s*$/i, '')
+        .replace(/\s+(?:J[uú]nior|Pleno|S[eê]nior)\s*$/i, '');
+      role = formatLabel(role);
+      const spelling = [
+        [/\bTecnico\b/g, 'Técnico'],
+        [/\bMecanico\b/g, 'Mecânico'],
+        [/\bManutencao\b/g, 'Manutenção'],
+        [/\bMaquinas\b/g, 'Máquinas'],
+        [/\bMaquina\b/g, 'Máquina'],
+        [/\bProducao\b/g, 'Produção'],
+        [/\bOperacoes\b/g, 'Operações'],
+        [/\bOperacao\b/g, 'Operação'],
+        [/\bEletronica\b/g, 'Eletrônica'],
+        [/\bEletronico\b/g, 'Eletrônico'],
+        [/\bHidraulica\b/g, 'Hidráulica'],
+        [/\bEletrica\b/g, 'Elétrica'],
+        [/\bEletrico\b/g, 'Elétrico']
+      ];
+      spelling.forEach(([pattern, replacement]) => { role = role.replace(pattern, replacement); });
+      return role.replace(/\(([AO])\)/g, (_, marker) => `(${marker.toLocaleLowerCase('pt-BR')})`);
+    }
+
+    function normalizeText(text) {
+      return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+    }
+
+    function initials(name) {
+      return name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
+    }
+
+    document.querySelector('[data-logout]').addEventListener('click', logout);
+    screenLinks.forEach(link => link.addEventListener('click', event => {
+      event.preventDefault();
+      showScreen(link.dataset.screenLink);
+      setSidebar(false);
+    }));
+    sidebarOpenButton.addEventListener('click', () => setSidebar(true));
+    document.querySelectorAll('[data-sidebar-close]').forEach(button => button.addEventListener('click', () => setSidebar(false)));
+    sidebarCollapseButton.addEventListener('click', () => {
+      if (window.innerWidth <= 980) setSidebar(false);
+      else toggleSidebarCollapse();
+    });
+    themeToggle.addEventListener('click', toggleTheme);
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') setSidebar(false); });
+    window.addEventListener('resize', () => { if (window.innerWidth > 980) setSidebar(false); });
+    document.querySelectorAll('[data-screen-button]').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.screenButton)));
+    document.querySelectorAll('[data-open-modal]').forEach(button => button.addEventListener('click', openVacationModal));
+    document.querySelectorAll('[data-close-modal]').forEach(button => button.addEventListener('click', () => { closeVacationCollaboratorOptions(); modal.classList.remove('open'); }));
+    vacationCollaboratorSearch.addEventListener('focus', () => renderVacationCollaboratorOptions(vacationCollaboratorSearch.value));
+    vacationCollaboratorSearch.addEventListener('input', () => {
+      vacationCollaborator.value = '';
+      vacationCollaboratorSearch.setCustomValidity('');
+      renderVacationCollaboratorOptions(vacationCollaboratorSearch.value);
+    });
+    vacationCollaboratorSearch.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (vacationCollaboratorOptions.hidden) renderVacationCollaboratorOptions(vacationCollaboratorSearch.value);
+        moveVacationCollaboratorHighlight(event.key === 'ArrowDown' ? 1 : -1);
+      } else if (event.key === 'Enter' && !vacationCollaboratorOptions.hidden && collaboratorSearchActiveIndex >= 0) {
+        event.preventDefault();
+        const option = vacationCollaboratorOptions.querySelectorAll('.collaborator-option')[collaboratorSearchActiveIndex];
+        const person = ganttData.people.find(item => String(item.id || item.employeeId) === option?.dataset.collaboratorOption);
+        selectVacationCollaborator(person);
+      } else if (event.key === 'Escape') {
+        closeVacationCollaboratorOptions();
+      }
+    });
+    vacationCollaboratorOptions.addEventListener('click', event => {
+      const option = event.target.closest('[data-collaborator-option]');
+      if (!option) return;
+      const person = ganttData.people.find(item => String(item.id || item.employeeId) === option.dataset.collaboratorOption);
+      selectVacationCollaborator(person);
+    });
+    document.addEventListener('click', event => { if (!event.target.closest('.collaborator-combobox')) closeVacationCollaboratorOptions(); });
+    document.querySelector('[data-collaborator-new]').addEventListener('click', () => openCollaboratorModal());
+    document.querySelectorAll('[data-collaborator-close]').forEach(button => button.addEventListener('click', closeCollaboratorModal));
+    document.querySelectorAll('[data-delete-close]').forEach(button => button.addEventListener('click', closeDeleteModal));
+    document.querySelectorAll('[data-restore-close]').forEach(button => button.addEventListener('click', closeRestoreModal));
+    modal.addEventListener('click', event => { if (event.target === modal) { closeVacationCollaboratorOptions(); modal.classList.remove('open'); } });
+    collaboratorModal.addEventListener('click', event => { if (event.target === collaboratorModal) closeCollaboratorModal(); });
+    deleteModal.addEventListener('click', event => { if (event.target === deleteModal) closeDeleteModal(); });
+    restoreModal.addEventListener('click', event => { if (event.target === restoreModal) closeRestoreModal(); });
+    document.querySelector('#vacation-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const collaboratorId = document.querySelector('#vacation-collaborator').value;
+      const cycle = Number(document.querySelector('#vacation-cycle').value);
+      const start = document.querySelector('#vacation-start').value;
+      const end = document.querySelector('#vacation-end').value;
+      const status = document.querySelector('#vacation-status').value;
+      const person = ganttData.people.find(item => String(item.id || item.employeeId) === collaboratorId);
+      if (!person) {
+        vacationCollaboratorSearch.setCustomValidity('Selecione um colaborador da lista.');
+        vacationCollaboratorSearch.reportValidity();
+        return;
+      }
+      const days = Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000) + 1;
+      const period = { cycle, start, end, days, status, invalid: days < 1, conflicts: [], conflictLevel: 'none' };
+      const existingIndex = person.periods.findIndex(item => item.cycle === cycle);
+      if (existingIndex >= 0) person.periods.splice(existingIndex, 1, period);
+      else person.periods.push(period);
+      persistCollaborators({ action: 'upsertVacation', collaboratorId, period });
+      invalidatePlanningViews();
+      renderManagementReports();
+      renderAnnualChart();
+      modal.classList.remove('open');
+      showToast('Salvando programação…');
+    });
+    collaboratorForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const originalId = document.querySelector('#collaborator-original-id').value.trim();
+      const employeeIdField = document.querySelector('#collaborator-id');
+      const employeeId = employeeIdField.value.trim();
+      const duplicate = ganttData.people.some(person => person.employeeId === employeeId && person.id !== originalId);
+      employeeIdField.setCustomValidity(duplicate ? 'Esta matrícula já está cadastrada.' : '');
+      if (duplicate) {
+        employeeIdField.reportValidity();
+        return;
+      }
+
+      const existingIndex = originalId ? ganttData.people.findIndex(person => person.id === originalId) : -1;
+      const existing = existingIndex >= 0 ? ganttData.people[existingIndex] : null;
+      const person = {
+        id: existing?.id || (crypto.randomUUID ? crypto.randomUUID() : `local-${Date.now()}`),
+        employeeId,
+        name: document.querySelector('#collaborator-name').value.trim().toLocaleUpperCase('pt-BR'),
+        role: normalizeRoleLabel(document.querySelector('#collaborator-role').value),
+        management: canonicalRegistryValue(document.querySelector('#collaborator-management').value, 'manager'),
+        sector: canonicalRegistryValue(document.querySelector('#collaborator-sector').value, 'sector'),
+        admission: document.querySelector('#collaborator-admission').value,
+        status: document.querySelector('#collaborator-status').value,
+        periods: existing?.periods || []
+      };
+
+      if (existingIndex >= 0) ganttData.people.splice(existingIndex, 1, person);
+      else ganttData.people.push(person);
+      persistCollaborators({ action: 'upsertCollaborator', originalId: originalId || undefined, collaborator: person });
+      invalidatePlanningViews();
+      refreshCollaboratorRoleOptions();
+      renderCollaborators();
+      renderManagementReports();
+      closeCollaboratorModal();
+      showToast('Salvando colaborador…');
+    });
+    document.querySelector('#collaborator-id').addEventListener('input', event => event.target.setCustomValidity(''));
+    document.querySelector('#delete-confirm').addEventListener('click', () => {
+      const person = ganttData.people.find(item => item.id === pendingDeleteId);
+      if (!person) return closeDeleteModal();
+      ganttData.people = ganttData.people.filter(item => item.id !== pendingDeleteId);
+      persistCollaborators({ action: 'deleteCollaborator', id: pendingDeleteId });
+      invalidatePlanningViews();
+      refreshCollaboratorRoleOptions();
+      renderCollaborators();
+      renderManagementReports();
+      closeDeleteModal();
+      showToast('Confirmando exclusão…');
+    });
+    document.querySelector('#download-backup').addEventListener('click', downloadBackup);
+    recoverSafetySnapshot.addEventListener('click', prepareSafetySnapshotRestore);
+    restoreBackupFile.addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (file) prepareBackupRestore(file);
+    });
+    document.querySelector('label[for="restore-backup-file"]').addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        restoreBackupFile.click();
+      }
+    });
+    document.querySelector('#restore-confirm').addEventListener('click', confirmBackupRestore);
+    managerRegistryForm.addEventListener('submit', event => {
+      event.preventDefault();
+      saveRegistryEntry('manager');
+    });
+    sectorRegistryForm.addEventListener('submit', event => {
+      event.preventDefault();
+      saveRegistryEntry('sector');
+    });
+    document.querySelectorAll('[data-registry-cancel]').forEach(button => button.addEventListener('click', () => resetRegistryForm(button.dataset.registryCancel)));
+    [managerRegistryList, sectorRegistryList].forEach(list => list.addEventListener('click', event => {
+      const editButton = event.target.closest('[data-registry-edit]');
+      const deleteButton = event.target.closest('[data-registry-delete]');
+      if (editButton) editRegistryEntry(editButton.dataset.registryEdit, editButton.dataset.registryKey);
+      else if (deleteButton) deleteRegistryEntry(deleteButton.dataset.registryDelete, deleteButton.dataset.registryKey);
+    }));
+    document.querySelectorAll('.switch').forEach(button => button.addEventListener('click', () => button.classList.toggle('on')));
+    manager.addEventListener('change', () => {
+      filterRows();
+      renderAnnualChart();
+    });
+    overviewYear.addEventListener('change', () => {
+      renderAnnualChart();
+      renderManagementReports();
+    });
+    document.querySelector('#calendar-prev').addEventListener('click', () => shiftCalendarContext(-1));
+    document.querySelector('#calendar-next').addEventListener('click', () => shiftCalendarContext(1));
+    calendarViewButtons.forEach(button => button.addEventListener('click', () => setCalendarView(button.dataset.calendarView)));
+    calendarManagement.addEventListener('change', renderCalendar);
+    calendarYear.addEventListener('change', () => {
+      const targetYear = Number(calendarYear.value);
+      const month = calendarFocusDate.getUTCMonth();
+      const lastDay = new Date(Date.UTC(targetYear, month + 1, 0)).getUTCDate();
+      calendarFocusDate = new Date(Date.UTC(targetYear, month, Math.min(calendarFocusDate.getUTCDate(), lastDay)));
+      renderCalendar();
+    });
+    function openCalendarDayFromTarget(target) {
+      const dateCell = target.closest('[data-calendar-date]');
+      if (!dateCell) return;
+      calendarFocusDate = new Date(`${dateCell.dataset.calendarDate}T00:00:00Z`);
+      setCalendarView('day');
+    }
+    calendarGrid.addEventListener('click', event => openCalendarDayFromTarget(event.target));
+    calendarGrid.addEventListener('keydown', event => {
+      if (!['Enter', ' '].includes(event.key) || !event.target.closest('[data-calendar-date]')) return;
+      event.preventDefault();
+      openCalendarDayFromTarget(event.target);
+    });
+    collaboratorsRole.addEventListener('change', renderCollaborators);
+    collaboratorsStatus.addEventListener('change', renderCollaborators);
+    collaboratorsManagement.addEventListener('change', renderCollaborators);
+    collaboratorsSector.addEventListener('change', renderCollaborators);
+    collaboratorsBody.addEventListener('click', event => {
+      const editButton = event.target.closest('[data-collaborator-edit]');
+      const deleteButton = event.target.closest('[data-collaborator-delete]');
+      if (editButton) {
+        const person = ganttData.people.find(item => item.id === editButton.dataset.collaboratorEdit);
+        if (person) openCollaboratorModal(person);
+      } else if (deleteButton) {
+        requestDeleteCollaborator(deleteButton.dataset.collaboratorDelete);
+      }
+    });
+    [ganttSearch, ganttManagement, ganttRole, ganttYear, ganttMonth, ganttOnlyConflicts].forEach(control => control.addEventListener(control.tagName === 'INPUT' && control.type !== 'checkbox' ? 'input' : 'change', renderGantt));
+    ganttScaleButtons.forEach(button => button.addEventListener('click', () => setGanttScale(button.dataset.ganttScale)));
+    document.querySelector('#gantt-reset').addEventListener('click', () => {
+      ganttSearch.value = '';
+      ganttManagement.value = '';
+      ganttRole.value = '';
+      ganttYear.value = '2026';
+      ganttMonth.value = String(new Date().getMonth());
+      ganttOnlyConflicts.checked = false;
+      search.value = '';
+      setGanttScale('month');
+    });
+    search.addEventListener('input', () => {
+      const activeScreen = document.querySelector('.app-screen.active')?.dataset.screen;
+      if (activeScreen === 'gantt') {
+        ganttSearch.value = search.value;
+        renderGantt();
+      } else if (activeScreen === 'colaboradores') {
+        renderCollaborators();
+      } else {
+        filterRows();
+      }
+    });
+    async function bootApplication() {
+      const sharedHandled = await initializeSharedData();
+      if (!sharedHandled) {
+        applyUserIdentity();
+        document.querySelector('[data-logout]').hidden = true;
+      }
+      updateThemeButton();
+      updateSidebarCollapseButton();
+      refreshRegistrySelectors();
+      renderRegistries();
+      renderManagementReports();
+      refreshBackupStatus();
+      document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#0d111b' : '#111827';
+      showScreen(location.hash.replace('#', '') || 'visao', false);
+      window.VacationBackend.reveal();
+      if (sharedDataMode) setInterval(refreshSharedDataIfChanged, 30000);
+    }
+    bootApplication().catch(error => window.VacationBackend.showError(error));
+    window.addEventListener('focus', refreshSharedDataIfChanged);
+    window.addEventListener('hashchange', () => showScreen(location.hash.replace('#', ''), false));
+  </script>
+</body>
+</html>
