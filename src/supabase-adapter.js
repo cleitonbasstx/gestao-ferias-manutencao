@@ -9,7 +9,12 @@ let currentUser;
 let started = false;
 let recovery = new URLSearchParams(location.search).has('recover');
 let resolveLogin;
+const SIGNUP_DOMAIN = '@suzano.com.br';
 const loggedIn = new Promise(resolve => { resolveLogin = resolve; });
+
+function isSuzanoEmail(email) {
+  return email.toLowerCase().endsWith(SIGNUP_DOMAIN) && email.slice(0, -SIGNUP_DOMAIN.length).length > 0;
+}
 
 function showError(error) {
   gate.hidden = false;
@@ -81,6 +86,10 @@ form.addEventListener('submit', async event => {
       if (error) throw error;
       authMessage('Se houver uma conta para esse e-mail, você receberá as instruções de recuperação.');
     } else if (action === 'signup') {
+      if (!isSuzanoEmail(email)) {
+        authMessage('Novos cadastros são permitidos somente com e-mail @suzano.com.br.');
+        return;
+      }
       const { error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl() } });
       if (error) throw error;
       form.elements.password.value = '';
