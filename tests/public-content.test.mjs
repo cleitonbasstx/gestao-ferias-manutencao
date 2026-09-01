@@ -13,6 +13,8 @@ test('Public interface has valid inline JavaScript and no initial employee recor
   assert.match(html, /<img src="pcm-logo\.svg" alt="PCM">/);
   assert.match(html, /Gestor: Leonardo Bastos/);
   assert.match(html, /Entrar na plataforma/);
+  assert.match(html, /nome@suzano\.com\.br/);
+  assert.match(await readFile('src/supabase-adapter.js','utf8'), /SIGNUP_DOMAIN = '@suzano\.com\.br'/);
   assert.doesNotMatch(html, /Não é necessário ter conta no ChatGPT/);
   assert.ok((await readFile('site/pcm-logo.svg','utf8')).startsWith('<svg'));
   const css = await readFile('site/app.css','utf8');
