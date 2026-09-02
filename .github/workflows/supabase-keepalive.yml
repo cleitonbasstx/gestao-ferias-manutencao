@@ -1,0 +1,32 @@
+name: Manter Supabase ativo
+
+on:
+  schedule:
+    # Diariamente às 09:17 no horário de Brasília (12:17 UTC).
+    - cron: '17 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Consultar API do Supabase sem alterar dados
+        env:
+          SUPABASE_URL: https://ejakaaehwbzjlclkcrcp.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYWthYWVod2J6amxjbGtjcmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMDQ0NTYsImV4cCI6MjEwMzc4MDQ1Nn0.b4NA7tsmLXTbnnihH-GXZnCmRG5ykO-ixJzCng6mF1M
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-delay 5 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/" \
+            --output /dev/null
+          echo "Supabase respondeu normalmente em $(date -u +'%Y-%m-%dT%H:%M:%SZ')."
