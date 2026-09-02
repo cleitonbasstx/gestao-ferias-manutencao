@@ -18,16 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Consultar API do Supabase sem alterar dados
+      - name: Executar diagnóstico seguro no Supabase
         env:
           SUPABASE_URL: https://ejakaaehwbzjlclkcrcp.supabase.co
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYWthYWVod2J6amxjbGtjcmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMDQ0NTYsImV4cCI6MjEwMzc4MDQ1Nn0.b4NA7tsmLXTbnnihH-GXZnCmRG5ykO-ixJzCng6mF1M
         run: |
           curl --fail-with-body --silent --show-error \
             --retry 3 --retry-delay 5 \
+            --request POST \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-            -H "Accept: application/openapi+json" \
-            "${SUPABASE_URL}/rest/v1/" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            "${SUPABASE_URL}/rest/v1/rpc/keepalive" \
             --output /dev/null
           echo "Supabase respondeu normalmente em $(date -u +'%Y-%m-%dT%H:%M:%SZ')."
