@@ -18,11 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Executar diagnóstico seguro no Supabase
+      - name: Verificar Gestão de Férias
         env:
           SUPABASE_URL: https://ejakaaehwbzjlclkcrcp.supabase.co
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYWthYWVod2J6amxjbGtjcmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMDQ0NTYsImV4cCI6MjEwMzc4MDQ1Nn0.b4NA7tsmLXTbnnihH-GXZnCmRG5ykO-ixJzCng6mF1M
         run: |
+          response_file="$(mktemp)"
           curl --fail-with-body --silent --show-error \
             --retry 3 --retry-delay 5 \
             --request POST \
@@ -31,5 +32,24 @@ jobs:
             -H "Content-Type: application/json" \
             --data '{}' \
             "${SUPABASE_URL}/rest/v1/rpc/keepalive" \
-            --output /dev/null
-          echo "Supabase respondeu normalmente em $(date -u +'%Y-%m-%dT%H:%M:%SZ')."
+            --output "${response_file}"
+          jq -e '.ok == true and (.checked_at | type == "string")' "${response_file}" > /dev/null
+          echo "Gestão de Férias respondeu normalmente."
+
+      - name: Verificar PCM Materiais
+        env:
+          SUPABASE_URL: https://xwxaufcmusqeezjycifu.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3eGF1ZmNtdXNxZWV6anljaWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNDA3ODgsImV4cCI6MjEwNTkxNjc4OH0.CywtILm2-lEvNQynZHQGlo5qBO65GF2kVoLVXocLwKY
+        run: |
+          response_file="$(mktemp)"
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-delay 5 \
+            --request POST \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            "${SUPABASE_URL}/rest/v1/rpc/keepalive" \
+            --output "${response_file}"
+          jq -e '.ok == true and (.checked_at | type == "string")' "${response_file}" > /dev/null
+          echo "PCM Materiais respondeu normalmente."
